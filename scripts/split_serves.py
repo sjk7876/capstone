@@ -57,7 +57,7 @@ def _append_to_csv(player, serve_id, video_path, out_file, start_time, end_time)
         writer = csv.writer(f)
         if new_file:
             writer.writerow(["player","serve_id","source_video","output_clip","start_time","end_time"])
-        writer.writerow([player, f"{serve_id:03d}", video_path, out_file, f"{start_time:.2f}", f"{end_time:.2f}"])
+        writer.writerow([player, f"{serve_id:03d}", video_path, out_file, f"{start_time:.3f}", f"{end_time:.3f}"])
 
 def _remove_from_csv(player, serve_id, out_file):
     if not os.path.exists(SERVES_CSV):
