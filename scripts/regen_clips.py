@@ -2,6 +2,7 @@
 import csv
 import subprocess
 import os
+import cv2
 
 SERVES_CSV = "data/metadata/serves.csv"
 
@@ -20,6 +21,16 @@ def regenerate_serves():
 
             print(f"▶Re-generating {player} serve {serve_id} → {output_clip}")
 
+            # Detect FPS from source video to match splitter behavior
+            fps = None
+            try:
+                cap = cv2.VideoCapture(source_video)
+                if cap.isOpened():
+                    fps = cap.get(cv2.CAP_PROP_FPS)
+                cap.release()
+            except Exception:
+                fps = None
+
             cmd = [
                 "ffmpeg", "-n",                # overwrite if exists
                 "-ss", start_time,
@@ -29,6 +40,12 @@ def regenerate_serves():
                 "-c:v", "libx264",             # reencode (clean split)
                 "-preset", "slow",
                 "-crf", "18",
+            ]
+
+            if fps and fps > 0:
+                cmd += ["-r", str(fps)]
+
+            cmd += [
                 output_clip,
             ]
 

@@ -52,8 +52,8 @@ def main():
     if len(sys.argv) != 3:
         print("Usage: python ts2frame.py <time or seconds> <serve_clip_path>")
         print("Examples:")
-        print("  python ts2frame.py 00:00:07.52 data/videos/processed/spencer/serve_001.mp4")
-        print("  python ts2frame.py 2.416 data/videos/processed/spencer/serve_001.mp4")
+        print("  python ts2frame.py 00:00:07.520 data/videos/processed/spencer/session_1/serve_001.mp4")
+        print("  python ts2frame.py 2.416 data/videos/processed/spencer/session_1/serve_001.mp4")
         sys.exit(1)
 
     ts = sys.argv[1]

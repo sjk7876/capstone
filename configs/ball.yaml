@@ -1,0 +1,14 @@
+# configs/ball.yaml
+# dataset config for YOLOv8 volleyball ball detection
+
+path: datasets/ball_yolo     # root dataset dir
+train: images/train          # train images (relative to 'path')
+val: images/val              # val images
+test: images/test            # test images
+
+# number of classes
+nc: 1
+
+# class names
+names:
+  - ball

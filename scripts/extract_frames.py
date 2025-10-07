@@ -57,10 +57,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--input", type=str, required=True,
-        help="Folder containing processed serve videos (e.g., data/videos/processed/spencer/)"
+        help="Folder containing processed serve videos (e.g., data/videos/processed/spencer/session_1/)"
     )
     parser.add_argument(
-        "--output", type=str, default="data/videos/frames",
+        "--output", type=str, default="data/frames",
         help="Base folder for extracted frames"
     )
     # interval removed; frames are sampled evenly based on duration
@@ -68,15 +68,45 @@ def main():
 
     os.makedirs(args.output, exist_ok=True)
 
-    player_name = os.path.basename(os.path.normpath(args.input))
+    # Handle both old flat structure and new session-based structure
+    base = os.path.normpath(args.input)
+    last = os.path.basename(base)
+    parent = os.path.dirname(base)
+    grandparent = os.path.dirname(parent)
 
-    for fname in sorted(os.listdir(args.input)):
+    if last.startswith("serve_"):
+        # Old flat structure: data/videos/processed/<player>/
+        player_name = os.path.basename(parent)
+        session_id = 1
+        input_dir = args.input
+    else:
+        # New session-based structure: data/videos/processed/<player>/session_<num>/
+        # where session folder is session_1, session_2, etc.
+        if last.startswith("session_") and last[8:].isdigit():
+            session_id = int(last[8:])
+            player_name = os.path.basename(parent)
+            input_dir = args.input
+        else:
+            # Fallback: assume <player>/session_<num> nesting
+            try:
+                if os.path.basename(parent).startswith("session_") and os.path.basename(parent)[8:].isdigit():
+                    session_id = int(os.path.basename(parent)[8:])
+                    player_name = os.path.basename(grandparent)
+                else:
+                    session_id = 1
+                    player_name = os.path.basename(parent)
+            except Exception:
+                session_id = 1
+                player_name = os.path.basename(parent)
+            input_dir = args.input
+
+    for fname in sorted(os.listdir(input_dir)):
         if not fname.lower().endswith((".mp4", ".mov", ".mkv")):
             continue
 
-        video_path = os.path.join(args.input, fname)
+        video_path = os.path.join(input_dir, fname)
         serve_id = os.path.splitext(fname)[0]
-        serve_outdir = os.path.join(args.output, f"{player_name}_{serve_id}")
+        serve_outdir = os.path.join(args.output, f"{player_name}_{session_id}_{serve_id}")
 
         extract_frames(video_path, serve_outdir)
 

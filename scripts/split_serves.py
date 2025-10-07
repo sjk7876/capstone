@@ -50,14 +50,14 @@ def _delete_last_clip(output_dir, player):
         return True, last_id, last_path
     return False, None, None
 
-def _append_to_csv(player, serve_id, video_path, out_file, start_time, end_time):
+def _append_to_csv(player, serve_id, video_path, out_file, start_time, end_time, session_id):
     os.makedirs(os.path.dirname(SERVES_CSV), exist_ok=True)
     new_file = not os.path.exists(SERVES_CSV)
     with open(SERVES_CSV, "a", newline="") as f:
         writer = csv.writer(f)
         if new_file:
-            writer.writerow(["player","serve_id","source_video","output_clip","start_time","end_time"])
-        writer.writerow([player, f"{serve_id:03d}", video_path, out_file, f"{start_time:.3f}", f"{end_time:.3f}"])
+            writer.writerow(["player","serve_id","session_id","source_video","output_clip","start_time","end_time"])
+        writer.writerow([player, f"{serve_id:03d}", session_id, video_path, out_file, f"{start_time:.3f}", f"{end_time:.3f}"])
 
 def _remove_from_csv(player, serve_id, out_file):
     if not os.path.exists(SERVES_CSV):
@@ -72,9 +72,10 @@ def _remove_from_csv(player, serve_id, out_file):
         writer = csv.writer(f)
         writer.writerows(rows)
 
-def split_serves(video_path, output_dir, player, max_jobs=None):
+def split_serves(video_path, output_dir, player, session_id, max_jobs=None):
     # Save serves under a player-specific subfolder inside output_dir
-    output_dir = os.path.join(output_dir, player)
+    session_str = str(session_id)
+    output_dir = os.path.join(output_dir, player, session_str)
     os.makedirs(output_dir, exist_ok=True)
 
     cap = cv2.VideoCapture(video_path)
@@ -116,6 +117,7 @@ def split_serves(video_path, output_dir, player, max_jobs=None):
             "proc": proc,
             "player": player,
             "serve_id": serve_id,
+            "session_id": session_id,
             "video_path": video_path,
             "out_file": out_path,
             "start_time": start_s,
@@ -133,7 +135,7 @@ def split_serves(video_path, output_dir, player, max_jobs=None):
             if ret == 0 and os.path.exists(job["out_file"]):
                 elapsed = time.time() - job.get("launched_at", time.time())
                 print(f"Encoding complete in {elapsed:.1f}s: {job['out_file']}")
-                _append_to_csv(job["player"], job["serve_id"], job["video_path"], job["out_file"], job["start_time"], job["end_time"])
+                _append_to_csv(job["player"], job["serve_id"], job["video_path"], job["out_file"], job["start_time"], job["end_time"], job["session_id"])
             else:
                 print(f"Encoding failed for serve {job['serve_id']:03d}: {job['out_file']}")
         active_jobs[:] = remaining
@@ -225,7 +227,25 @@ def main():
                         help="Max parallel encodes (optional)")
     args = parser.parse_args()
 
-    split_serves(args.video, args.out, args.player, args.jobs)
+    # Strictly require new raw path format for session detection.
+    # Expected: data/videos/raw/YYYY-MM-DD/session_<num>/filename.mp4
+    session_id = None
+    try:
+        norm = os.path.normpath(args.video)
+        parts = norm.split(os.sep)
+        if "raw" in parts:
+            i = parts.index("raw")
+            if len(parts) > i + 2:
+                session_part = parts[i + 2]
+                if session_part.startswith("session_") and session_part[8:].isdigit():
+                    session_id = int(session_part[8:])
+    except Exception:
+        session_id = None
+    if session_id is None:
+        print("Error: Could not detect session from raw path. Expected data/videos/raw/YYYY-MM-DD/session_<num>/filename.mp4")
+        return
+
+    split_serves(args.video, args.out, args.player, session_id, args.jobs)
 
 if __name__ == "__main__":
     main()

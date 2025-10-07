@@ -1,6 +1,8 @@
 # My ignores
 data/testing/
 data/videos/
+data/frames/
+.cursor/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,0 +1,37 @@
+
+The folling files are needed:
+	IEEEabrv.bib
+	IEEEtran.bst
+	IEEEtran.cls
+	IEEEtran_bst_HOWTO.pdf
+
+This file you are reading now:
+	ReadMe
+
+This file has 2 targets 
+	Makefile
+		pdf:
+			creates the pdf file
+			you need to run it twice the first time, or after you modified *.bib
+		clean:
+			removes the generated files
+
+Files you need to modify:
+	example.bib - bibliography
+	example.tex - the text
+	background.tex
+		will be inserted via \input{background.tex}.
+		I am suggesting you use this over using one large tex file.
+
+		change the term:
+		\fancyhead[R]{\textit{RIT Computer Science ~\textbullet~ Capstone Report ~\textbullet~ 20171}}
+		to the current term.
+		add the content here
+	example_longer.tex -  a longer example of example.tex
+
+Files used in example:
+	myfigure.pdf
+	myfigure.png
+
+
+-hp

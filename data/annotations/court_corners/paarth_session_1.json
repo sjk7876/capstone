@@ -1,0 +1,35 @@
+{
+  "session_id": "unknown",
+  "video_file": "data/videos/processed/paarth/session_1/serve_004.mp4",
+  "image_resolution": [
+    1920,
+    1080
+  ],
+  "court_corners": [
+    [
+      703,
+      576
+    ],
+    [
+      1173,
+      575
+    ],
+    [
+      1814,
+      849
+    ],
+    [
+      67,
+      863
+    ],
+    [
+      576,
+      636
+    ],
+    [
+      1309,
+      631
+    ]
+  ],
+  "annotator": "spencer"
+}
