@@ -1,0 +1,57 @@
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.idx
+*.ind
+*.ilg
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.loa
+*.nav
+*.nlo
+*.nls
+*.snm
+*.vrb
+*.xdy
+
+# LaTeX temporary files
+*.tmp
+*.temp
+*~
+
+# PDF output (uncomment if you don't want to track PDFs)
+# *.pdf
+
+# Backup files
+*.bak
+*.backup
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

@@ -1,0 +1,648 @@
+RIT Computer Science | Capstone Report
+
+Twitch Stream Highlighter
+Atharva Lele
+Department of Computer Science
+B. Thomas Golisano College of Computing and Information Sciences
+Rochester Institute of Technology
+Rochester, New York
+al8523@cs.rit.edu
+
+Abstract - The duration of Twitch streams,
+frequently extending over several hours, poses a
+significant obstacle for viewers seeking to
+uncover the most captivating moments or
+highlights. The arduous task of sifting through
+extensive content to identify these standout
+segments often discourages viewers from fully
+engaging with the stream. The solution involves
+various AWS technologies to generate Twitch
+stream highlights. Once the streamer starts a live
+stream, we fetch live chat data from the stream
+using the Twitch API and store it in the database.
+Real-time analysis of chat activity is performed to
+identify highlight moments based on significant
+and sustained jumps in chat activity. Once the
+highlight moment is identified, the Twitch API is
+given the associated timestamp to generate a clip
+that is 30 seconds long. Clips are pushed to the
+frontend UI so that user can have all the clips in
+one place.
+I.
+
+INTRODUCTION
+
+Twitch, founded in 2011, has emerged as a dominant
+force in live streaming, offering a diverse range of
+content spanning gaming, art, music, and more. It is
+a platform primarily focused on video game live
+streaming and esports and gained rapid popularity
+among gamers and content creators, leading to its
+acquisition by Amazon in 2014 for approximately
+$970 million.
+
+Twitch attracts broadcasters from several
+genres along with 100 million viewers every month,
+although the majority are competitive gamers and
+video game streams. Unlike other prominent
+platforms, it offers streamers the opportunity to
+engage with others and develop significant
+communities. Twitch streamers have significantly
+impacted the game business. [4]
+Twitch allows viewers to actively support
+their favorite streams by purchasing and donating
+tokens. Subscribe to your favorite streamers for
+exclusive bonuses. To get more friends and
+supporters, streamers should use advanced
+communication strategies during live-streaming,
+rather than merely publishing photographs or videos
+on social media. Because of the live-streaming
+atmosphere, Twitch users have a strong sense of
+connection with other viewers [5]. Unlike other social
+media platforms like Instagram or YouTube, which
+only offer time-lagged comments sections, a live chat
+box is available for interaction between streamers and
+spectators throughout the show. Twitch can foster
+long-term relationships, according to research [6].
+A study done in 2021, found the average
+length of the streams to be about 6 hours long [3].
+This lengthy duration poses a substantial
+barrier for viewers who want to find the most
+compelling moments or highlights in the information.
+The job of manually filtering through hours of film to
+find these notable bits is difficult, resulting in lower
+viewer engagement with the broadcast. To solve this
+issue, this paper provides a method that uses multiple
+
+Rochester Ins,tute of Technology
+
+1
+
+AWS services to automate the creation of Twitch
+stream highlights. By combining real-time
+conversation activity analysis with the Twitch API's
+clipping capability, our approach tries to detect and
+extract critical moments based on substantial and
+persistent increases in chat participation. Once
+identified, these highlight moments are used to
+generate 30-second clips, which are then seamlessly
+integrated into a user-friendly frontend UI, providing
+viewers with easy access to curated highlights within
+a single platform.
+II.
+
+RELATED WORK
+
+A. Study related to Streaming Services and
+Societies
+Research provided a three-month dataset
+from
+YouTube
+and
+Twitch.
+Preliminary
+investigations indicate that both platforms,
+particularly Twitch, can provide valuable services at
+any time. The channel's popularity varies more than
+other social media sites [7]. A study done by Reesha
+Gandhi, etc. highlights that live streaming is a unique
+media format that allows streamers and viewers to
+communicate directly. The environment of live
+streaming is particularly intriguing since it permits
+mass personal social interactions. The streamer
+transmits to a broader, mainly unknown audience, but
+may also communicate in a personal way with
+viewers. [8]
+B. Studies on Twitch
+The Channel Popularity study done on
+Twitch, tracked the weekly activities of 20000 active
+Twitch users over the course of one month and
+gathered over 3M data points, with more than 55,00
+streams and 50,000 videos, they analyzed streamers
+and their associated streams to determine their
+significance. This covers metrics like as following
+growth, video and stream views, and content. [3]
+
+time-series data is collected and not while collecting
+the data.
+D. Studies on Sentiment Analysis
+In 2022, a more thorough investigation into
+sentiment analysis was conducted; levels such as
+document, sentence, phrase, and aspect levels were
+used to categorize the data. investigating several
+strategies, such as the hybrid method, machine
+learning strategy, and dictionary-based strategy. Of
+them, the report indicates that the industry uses
+supervised machine learning extensively. One of the
+difficulties they encountered was identifying
+sarcasm. The inferred meaning of words and cultural
+quirks make it more challenging. Another challenge
+is the casual tone of internet communication, which
+includes slang and acronyms [9]. This relates directly
+to our idea since Twitch users frequently speak
+languages that are like each other.
+Since we are going to perform live analysis on a
+chat data, I found a similar work done in the paper
+“Live Chat Analysis using Machine Learning” [1].
+The authors used Recurrent Neural Networks
+(RNNs) on live chat data to predict the sentiment.
+III.
+
+A. Setting up and connecting to Twitch API
+infrastructure
+All Twitch integrations require you to register
+your app with Twitch. Twitch requires OAuth access
+tokens to access most Twitch resources. To get an
+access token, send a POST request to the token
+generation endpoint with appropriate request
+parameters like client_id, client_secret, and
+grant_type. If the request succeeds, it returns an
+access token.
+{
+"access_token": "foo12342bar9876",
+
+C. Peak finding algorithms in Time-Series Data
+There are some interesting Peak finding
+algorithms each based on a specific formalization of
+the notion of a peak, to detect all peaks in the given
+time-series [2]. But those are performed when whole
+
+IMPLEMENTATION PLAN
+
+"expires_in": 5011271,
+"token_type": "bearer"
+}
+
+Rochester Ins,tute of Technology
+
+2
+
+Once access token is generated, you can use
+this to connect to Internet Relay Chat (IRC) interface
+that lets chatbots connect to Twitch chat rooms using
+a WebSocket or TCP connection.
+B. Real-Time Stream Detection and Chat
+Extraction
+Now that we successfully authenticated with
+the Twitch IRC server, the next step is to join a
+channel and begin receiving chat messages. To join
+one or more channels, we use the JOIN message with
+the channel name. If the stream is live, we will
+immediately receive chat message at our socket input
+endpoint. Refer Figure 1.
+The extracted chat messages are then stored
+in a NoSQL database like DynamoDB. If the system
+is already listening to a channel, and a different user
+subscribes to the channel, the system won’t again hit
+the Twitch API asking for chat message.
+
+The Channels table will contain details about the
+channels available on the platform, such as channel
+names and IDs, so the users can select and subscribe
+to their preferred channels. Finally, the Subscriptions
+table will establish the relationship between users and
+the channels they subscribe to. By leveraging
+Amazon RDS, a reliable and scalable relational
+database service, our system ensures robust data
+management capabilities essential for user
+registration and subscription tracking. Refer Figure 2
+for a rough relationship diagram.
+
+Figure 2. Relationship diagram for Users, Channel and
+Subscription
+
+Figure 1. Joining channel and extracting chat messages
+
+To effectively register users and manage
+subscriptions, our system will employ three primary
+tables within an Amazon RDS relational database:
+Users, Channels, and Subscriptions. The Users table
+will store important user information, including
+usernames, email id, and authentication credentials,
+for user registration and authentication processes.
+
+C. Real-time Clip Generation
+To identify peaks in real-time chat message
+activity and generate 30-second clips using the
+Twitch API, our system employs a dynamic algorithm
+that continuously monitors chat activity within
+predefined time windows. When chat activity crosses
+a predetermined threshold value, indicating a peak in
+engagement, the system triggers the Twitch API to
+capture the last 30 seconds of the live stream. This
+process involves retrieving the live stream's video
+feed and extracting the relevant segment using the
+Twitch API's clipping functionality.
+To generate a highlight clip, we will use the
+Twitch
+API
+clipping
+endpoint
+POST
+https://api.twitch.tv/helix/clips. This request takes in
+parameter broadcaster_id i.e. the id of the streamer,
+the response returns a unique clip id that we will later
+use to GET the embedded url of the clip and edit_url
+that you can use to edit the clip’s title, identify the
+part of the clip to publish, and publish the clip.
+
+Rochester Ins,tute of Technology
+
+3
+
+Once we have the unique id of the clip, we
+will use the Twitch APIs GET request. The response
+body contains embed_url that we can use in an
+<iframe> html tag to embed the clip.
+D. Sentiment Analysis
+In addition to real-time chat activity
+monitoring, our system uses sentiment analysis using
+AWS Comprehend to acquire insights into the
+emotional context of chat exchanges during key
+times. The system uses AWS Comprehend, a natural
+language processing tool, to analyze the emotion
+indicated in the conversation data linked with each
+highlight clip. This enables for a more in-depth
+assessment of audience emotions and emotional
+responses during key periods in the broadcast. Using
+AWS Comprehend's powerful machine learning
+algorithms, the system can properly recognize
+positive, negative, or neutral feelings voiced by chat
+viewers, offering significant insights into the general
+sentiment dynamics surrounding highlight moments.
+Once we identify the chat peak, we store the
+chat message in that peak window to provide it to
+AWS Comprehend for Sentimental Analysis. First,
+we preprocess the Twitch messages to ensure they are
+in a suitable format for sentiment analysis like
+removing emoji data or special characters,
+normalizing the texts. Using the AWS SDK, we
+programmatically interact with the Comprehend
+Service. Figure 3 shows how to integrate AWS
+Comprehend SDK.
+
+This hosted website allows users to effortlessly
+manage their subscriptions to channels of interest,
+subscribing or unsubscribing as needed. Furthermore,
+clients may access and view highlight clips created
+by our technology, which emphasize the most
+interesting moments from streams and provide
+sentiment analysis insights. Leveraging AWS
+Amplify's capabilities for website hosting guarantees
+consistent speed and scalability, allowing us to
+provide a smooth viewing experience.
+F. Architecture
+Here is the architecture diagram of the above
+discussed system showing all the different services,
+the general workflow of the system, and gives a
+general idea of how the services communicate with
+each other. Please refer Figure 4.
+
+Figure 4. Architecture Diagram
+
+Figure 3. Integrating with AWS SDK
+
+The result of sentimental analysis is attached to the
+generated clip giving the user an idea of the sentiment
+surrounding that clip.
+E. User friendly interface
+We host the project using AWS Amplify,
+which provides viewers with an easy-to-use platform.
+
+Amazon SNS is used to send notifications to
+a large number of subscribers through various
+delivery channels such as email, SMS, HTTP, and
+more. Since we have the user’s email address during
+login registration, we can send an email every time
+the streamer who the user has subscribed starts the
+stream.
+Lastly, we used AWS CloudFormation to
+package all of our infrastructure into a
+straightforward JSON template that can be edited
+with text. We provide the infrastructure requirements,
+such as the required AWS resources, settings, and
+interdependencies,
+in
+this
+template.
+The
+infrastructure is then kept in the proper state for the
+
+Rochester Ins,tute of Technology
+
+4
+
+duration of its life by using CloudFormation to handle
+the dependable and consistent creation, modification,
+and deletion of resources.
+
+using the /user/authenticate endpoint. The Backend
+interacts with the userService authenticateUser() to
+determine the validity of user. Upon successful
+authentication, the user is logged in.
+
+API Call Sequence Diagram
+3. Subscribe to a Channel
+Once logged in, the Actor can subscribe to a
+channel by providing a channel name. The Frontend
+sends the subscription request to the Backend using
+the /subscribeChannel endpoint with the channel
+name and user's ID. The Backend checks with the
+SubscriptionService if the user is already subscribed
+to the channel using isUserSubscribedToChannel(). If
+not subscribed, the Backend adds a new subscription
+using SubscriptionService's addUserSubscription().
+The Actor is then notified that they are "Subscribed"
+to the channel.
+
+Figure 5. API Calls involving user.
+
+According to Figure 5, the user initiates 4
+major events which triggers backend events for user
+registration and channel subscriptions. Let’s go over
+each request and it’s required parameters and the
+expected response.
+1. Register
+New users initiates a registration request to
+the Frontend with a username, email, and password.
+The Frontend sends this information to the Backend
+using the /user/register endpoint. The Backend
+interacts using the userService.registerUser() to
+register the user in the Database. The Database
+responds with success and the user’s ID, which is
+passed back to the Frontend and then to the user as a
+“Register Success” confirmation.
+2. Login
+The Actor initiates a login request to the
+Frontend with a username or email and password.
+The Frontend sends this information to the Backend
+
+4. Unsubscribe from a Channel
+The Actor can unsubscribe from a channel by
+providing the channel name to the Frontend. The
+Frontend sends the unsubscribe request to the
+backend using the /unsubscribeChannel endpoint
+with the channel name and user's ID. The Backend
+checks with the SubscriptionService if the user is
+subscribed
+to
+the
+channel
+using
+isUserSubscribedToChannel(). If subscribed, the
+Backend
+removes
+the
+subscription
+using
+SubscriptionService's deleteUserSubscription(). The
+Actor is then notified that they are "Unsubscribed" to
+the channel.
+Figure 6 illustrates interactions between a
+
+Backend system, the Twitch API, and a Database for
+fetching and storing data related to a Twitch
+streamers, Twitch Clips and Access Tokens.
+1. Get Twitch Streamer Detail
+The Backend requests streamer details from
+Twitch API using the /helix/users endpoint. The
+Twitch API returns the streamer details. The Backend
+then stores these details in its own Database.
+2. Get Twitch Stream Detail
+
+Rochester Ins,tute of Technology
+
+5
+
+The Backend requests details about a stream
+from the Twitch API using the /helix/streams
+endpoint. Twitch API returns the stream details to the
+Backend.
+
+endpoint. Twitch API provides a valid access token to
+the Backend.
+IV.
+
+RESULTS
+
+This section focuses on results the above
+implementation plan with appropriate images of
+various interfaces and functionalities of each page.
+Let’s go over the platform features one by one:
+A. Login and Authentication Interface
+Figure 7 illustrates a login page where users
+can authenticate themselves to access their personal
+accounts. The interface offers two methods of
+authentication: traditional username and password
+combination or using an email address. This
+flexibility caters to user preferences and adds
+convenience. The inclusion of a "Register" link
+suggests a user-friendly approach to onboarding new
+users.
+
+Figure 6. API calls involving Twitch API
+
+3. Get Stream Clip Detail
+The Backend requests details about stream
+clips from the Twitch API using the /helix/clips
+endpoint. Twitch API returns the clip details. The
+Backend stores these clip details in the Database.
+4. Validate Access Token
+The Backend validates the access token with
+the Twitch API using the /oauth2/validate endpoint.
+If the access token is not valid it proceeds to
+generating a new access token.
+5. Generate Access Token
+The Backend requests a new access token
+from the Twitch API using the /oauth2/token
+
+Figure 7. Login Page
+
+B. Channel Subscriptions and Discovery
+After the user successfully logins to the
+platform, they are redirected to the home page of the
+platform, where users can browse and select from
+various channels that are preloaded so they can
+quickly subscribe to any of the streams they like.
+These images feature a visual gallery of streamer
+profile pictures, channel names, and subscription
+status indicated by heart icons. This visual gallery
+allows for quick navigation and user engagement
+with the streamers' channels. Refer Figure 8.
+
+Rochester Ins,tute of Technology
+
+6
+
+Figure 10. Subscribed channels.
+Figure 8. Home page after login.
+
+Users can also use the search bar to search for
+a streamer they like. Figure 9 shows a user searching
+for a streamer easportsfc which is a soccer streaming
+channel playing the game FC by EA Sports. The
+ability to search for channels offers users a tailored
+view to quickly access or subscribe to the content
+from creators they support.
+
+Figure 9. Searching for a channel.
+
+Once the user subscribes to the channels they
+like, all the subscribed channels can be viewed and
+accessed by toggling a switch. The untoggled switch
+shows all the preloaded, and previously searched
+channels, so this switch is a convenient way to only
+filter those channels the user has subscribed. Refer
+Figure 10.
+
+C. Stream Highlight Moments as Clips
+This section is the crucial functionality of the
+platform that the users will interact with. Let’s
+consider a use case of a teenager who likes various
+gaming streams like FIFA, Valorant, Fortnite, UFC,
+etc. Assuming, he won’t have the time to watch
+streams as he is busy all day with school and
+homework. So, he logs in to our platform in the
+morning and subscribes the various channels before
+going to school. When he returns, the platform should
+have generated various clips showing highlight
+moments.
+Figure 11 through Figure 15 shows various
+clippings that he can access which varies from
+gameplay
+highlights,
+victory
+celebrations,
+competitive knockdowns, to reactions during critical
+points in a game, demonstrating the dynamic nature
+of live streams and the community's role in curating
+that content.
+Since the clips last for only 30 seconds he can
+watch an average of 20 clips per channels in about 10
+minutes. Assuming an hour-long stream generate 3040 clips, the user will spend 15-20 minutes watching
+those clips. He would have saved 40-45 minutes just
+watching highlights which cover the whole length of
+the stream.
+The platform attaches every clip with the
+sentiment surrounding it, generated by the chat
+activity during that time. The keywords like
+“NEGATIVE”, “NEUTRAL” indicates how the
+people in the chat reacts to an event. Of course, in a
+
+Rochester Ins,tute of Technology
+
+7
+
+game like soccer there are supporters and opponents,
+so some people will react positively or negatively to
+goal. So, the resulting sentiment can turn out to be
+“NEUTRAL”.
+
+Figure 13. Clipping of a knockdown.
+
+Figure 11. Clipping of a goal celebration.
+
+Figure 14. Clipping of a penalty kick.
+
+Figure 12. Clipping of a round win.
+
+Figure 15. Clipping of a round lost.
+
+Rochester Ins,tute of Technology
+
+8
+
+V.
+
+CONCLUSION AND FUTURE WORK
+
+The results proved to be promising when we
+considered only chat data stream and the
+implementation outlined in this paper succeeded in
+capturing highlight events of the twitch stream, but it
+has room for improvement in the below areas:
+A. Login and Registration
+The primary objective of this project was
+twitch stream highlight generation, therefore basic
+login and registration administration was included for
+both new and existing customers. We can improve it
+by integrating Amazon Cognito, a web service that
+makes registration and login for online and mobile
+apps easier.
+B. Clipping Algorithm
+The current clipping algorithm considers chat
+activity, but not the stream content. If we can
+introduce modern AI algorithms to the stream video
+content and detect exciting moment. Furthermore,
+image and sound recognition algorithms can detect
+visual cues or audio spikes that often accompany
+highlight-worthy events.
+C. Improving the User Experience
+Improve the user experience by through a
+combination of intuitive navigation, and more
+personalized content delivery. Adding trending or top
+streamers, so users can keep track of trending
+streamers. Also, adding a game category, so users can
+subscribe to streamer streaming that game. Tailoring
+the content to the sentimental preference of the user.
+Additionally, implementing mechanisms such as
+sidebars, tooltips, and visual cues can guide users
+through new features or more complex
+functionalities.
+ACKNOWLEDGEMENT
+
+REFERENCES
+[1] Kavibharathi, S. & Priyankaa, S. & Kaviya, M.S.
+& Vasanthi, Dr.S.. (2021). Live Chat Analysis
+Using
+Machine
+Learning.
+International
+Academic Journal of Science and Engineering. 8.
+39-44. 10.9756/IAJSE/V8I1/IAJSE0805.
+[2] Palshikar, Girish. (2009). Simple Algorithms for
+Peak Detection in Time-Series.
+[3] Lê, Hà & Wu, Junming & Yu, Louis & Lynn,
+Melissa. (2021). A study on Channel Popularity
+in Twitch.
+[4] Mark R Johnson and Jamie Woodcock. The
+impacts of live streaming and twitch. tv on the
+video game industry. Media, Culture & Society,
+41(5):670–688, 2019.
+[5] Tim Wulf, Frank M. Schneider, and Stefan
+Beckert. Watching players: An exploration of
+media enjoyment on twitch. Games and Culture,
+15(3):328–346, 2020.
+[6] Jeff T. Sheng and Sanjay R. Kairam. From virtual
+strangers to irl friends: Relationship development
+in livestreaming communities on twitch. Proc.
+ACM Hum.-Comput. Interact., 4(CSCW2),
+October 2020
+[7] Karine Pires and Gwendal Simon. Youtube live
+and twitch: a tour of user-generated live
+streaming systems. In Proceedings of the 6th
+ACM multimedia systems conference, pages
+225–230, 2015.
+[8] Reesha Gandhi, Christine L Cook, Nina
+LaMastra, Jirassaya Uttarapong, and Donghee
+Yvette Wohn. An exploration of mental health
+discussions in live streaming gaming
+communities. Frontiers in psychology, 12:751,
+2021
+[9] Wankhade, M., Rao, A.C.S. & Kulkarni, C. A
+survey on sentiment analysis methods,
+applications, and challenges. Artif Intell Rev 55,
+5731–5780
+(2022).
+https://doi.org/10.1007/s10462-022-10144-1
+
+The author would like to thank Prof. Michael Mior
+and Prof. Minseok Kwon for their invaluable support,
+insightful advice, and technical assistance to make
+this implementation possible.
+
+Rochester Ins,tute of Technology
+
+9
+
+
