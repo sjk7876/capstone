@@ -74,7 +74,7 @@ def _remove_from_csv(player, serve_id, out_file):
 
 def split_serves(video_path, output_dir, player, session_id, max_jobs=None):
     # Save serves under a player-specific subfolder inside output_dir
-    session_str = str(session_id)
+    session_str = f"session_{session_id}"
     output_dir = os.path.join(output_dir, player, session_str)
     os.makedirs(output_dir, exist_ok=True)
 
