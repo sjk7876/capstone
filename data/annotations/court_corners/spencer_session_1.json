@@ -1,0 +1,35 @@
+{
+  "session_id": "unknown",
+  "video_file": "data/videos/processed/spencer/session_1/serve_006.mp4",
+  "image_resolution": [
+    1920,
+    1080
+  ],
+  "court_corners": [
+    [
+      709,
+      573
+    ],
+    [
+      1170,
+      571
+    ],
+    [
+      1810,
+      845
+    ],
+    [
+      64,
+      861
+    ],
+    [
+      569,
+      635
+    ],
+    [
+      1307,
+      629
+    ]
+  ],
+  "annotator": "spencer"
+}

@@ -1,0 +1,35 @@
+{
+  "session_id": "unknown",
+  "video_file": "data/videos/processed/ryan/session_2/serve_005.mp4",
+  "image_resolution": [
+    1920,
+    1080
+  ],
+  "court_corners": [
+    [
+      704,
+      630
+    ],
+    [
+      1169,
+      630
+    ],
+    [
+      1829,
+      916
+    ],
+    [
+      59,
+      911
+    ],
+    [
+      571,
+      688
+    ],
+    [
+      1308,
+      691
+    ]
+  ],
+  "annotator": "spencer"
+}
