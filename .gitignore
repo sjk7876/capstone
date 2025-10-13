@@ -2,6 +2,9 @@
 data/testing/
 data/videos/
 data/frames/
+runs/
+models/*.pt
+datasets/
 .cursor/
 
 # Byte-compiled / optimized / DLL files
