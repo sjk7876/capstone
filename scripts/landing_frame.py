@@ -93,17 +93,17 @@ def label_clip(clip_path):
 def main():
     with open(SERVES_CSV, newline="") as f:
         reader = csv.DictReader(f)
-        clips = [(row["output_clip"], row.get("landing_frame", "")) for row in reader]
+        clips = [(row["output_clip"], row.get("landing_frame", "") or "") for row in reader]
 
     # stats before labeling
     total = len(clips)
-    already_labeled = sum(1 for _, landing in clips if landing.strip() != "")
+    already_labeled = sum(1 for _, landing in clips if landing and landing.strip() != "")
     remaining = total - already_labeled
 
     # find first unlabeled clip
     start_index = 0
     for i, (_, landing) in enumerate(clips):
-        if landing.strip() == "":
+        if not landing or landing.strip() == "":
             start_index = i
             break
 
@@ -119,9 +119,9 @@ def main():
 
     for clip, landing in clips[start_index:]:
         if not os.path.exists(clip):
-            print(f"⚠️ Skipping missing {clip}")
+            print(f"Skipping missing {clip}")
             continue
-        if landing.strip() != "":
+        if landing and landing.strip() != "":
             print(f"Skipping {clip} (already labeled)")
             continue
         result, quit_all = label_clip(clip)

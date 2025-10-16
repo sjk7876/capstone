@@ -66,7 +66,7 @@ def _remove_from_csv(player, serve_id, out_file):
     with open(SERVES_CSV, "r", newline="") as f:
         reader = csv.reader(f)
         for row in reader:
-            if row and not (row[0] == player and row[1] == f"{serve_id:03d}" and row[3] == out_file):
+            if row and not (row[0] == player and row[1] == f"{serve_id:03d}" and row[4] == out_file):
                 rows.append(row)
     with open(SERVES_CSV, "w", newline="") as f:
         writer = csv.writer(f)
@@ -88,7 +88,11 @@ def split_serves(video_path, output_dir, player, session_id, max_jobs=None):
     duration = frame_count / fps
 
     print(f"Video length: {duration:.2f}s at {fps:.1f} fps")
-    print("Controls: [s] = start serve, [e] = end serve, [d] = delete previous, [f] = fast-forward, [q] = quit")
+    print("Controls: [s] = start serve, [e] = end serve, [d] = delete previous, [f] = fast-forward, [b] = back 10 frames, [q] = quit")
+
+    # Setup window for proper display
+    cv2.namedWindow("split_serves", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("split_serves", 1280, 720)  # Set reasonable default size
 
     serve_id = _next_serve_id(output_dir)
     start_time = None
@@ -188,9 +192,14 @@ def split_serves(video_path, output_dir, player, session_id, max_jobs=None):
             deleted, last_id, path = _delete_last_clip(output_dir, player)
             if deleted:
                 serve_id = last_id
-                print(f"Deleted {path}. Next id will be {serve_id:03d}.")
-            else:
-                print("No previous clip to delete.")
+                print(f"Deleted {path}")
+
+        elif key == ord("b"):
+            # Go back 30 frames
+            current_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
+            new_frame = max(0, current_frame - 30)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
+            current_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
 
         elif key == ord("q"):
             break
