@@ -2,9 +2,11 @@
 
 ## Current Software
 
-- ffmpeg (re-encode video)
-  - `ffmpeg -i input.mp4 -an -c:v libx264 -b:v 5M -preset slow -r 60 output_5mbps_60fps.mp4`
-- CVAT (annotating ball bounding boxes) 
+- **YOLO11n** - Latest YOLO model for ball detection
+- **YOLOv8n** - Previous YOLO model for comparison
+- **ffmpeg** - Video processing and re-encoding
+- **CVAT** - Annotation tool for ball bounding boxes
+- **OpenCV** - Frame extraction and video processing 
 
 
 ## Current Workflow
@@ -16,7 +18,7 @@ This is the end-to-end process we’re using to build the volleyball serve datas
 ### 1) Record Raw Sessions
 - Place camera on a 74" (188 cm) tripod, centered on the baseline, slightly tilted down.
 - Capture entire toss → baseline → net → landing zone.
-y- Save raw sessions into: `data/videos/raw/YYYY-MM-DD/session_<num>/filename.mp4`
+- Save raw sessions into: `data/videos/raw/YYYY-MM-DD/session_<num>/filename.mp4`
 
 ---
 
@@ -38,7 +40,7 @@ Controls:
 
 Outputs clips to: `data/videos/processed/<player>/<session>/serve_###.mp4`
 
-Each clip is logged in: `data/metadata/serves.csv` (times with millisecond precision).
+Each clip is logged in: `data/metadata/serves.csv` (frame-accurate precision).
 
 **Session auto-detection:** Session ID is automatically detected from the raw video path. Create folders like `data/videos/raw/2025-01-15/session_1/`, `data/videos/raw/2025-01-15/session_2/`, etc.
 
@@ -72,7 +74,7 @@ Or grab every frame for a specific serve:
 ```bash
 python3 scripts/extract_all_frames.py \
   --player spencer \
-  --session 1\
+  --session 1 \
   --serve 1
 ```
 
@@ -89,9 +91,8 @@ data/frames/spencer_1_serve_001/
 ### 5) Annotate Data
 Label landing frame:
 ```bash
-python3 scripts/landing_frame.py FINISH
+python3 scripts/landing_frame.py
 ```
-instructions here
 
 Then use CVAT with three projects: ball bounding boxes, court corners, court masks
 
@@ -99,3 +100,21 @@ Annotations required:
 - Ball bounding boxes (YOLO format)
 - Court corners (once per session)
 - Landing frame index is stored in `data/metadata/serves.csv`
+
+---
+
+## Dataset Structure
+
+```
+data/
+├── videos/
+│   ├── raw/YYYY-MM-DD/session_<num>/     # Raw recordings
+│   └── processed/<player>/session_<num>/ # Split serves
+├── frames/                               # Extracted frames
+├── metadata/
+│   ├── serves.csv                       # Serve metadata (frame-based)
+│   └── players.csv                      # Player information
+└── annotations/                         # CVAT annotations
+    ├── ball_yolo/                       # YOLO ball detection dataset
+    └── court_corners/                   # Court corner annotations
+```
