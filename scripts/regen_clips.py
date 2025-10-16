@@ -14,8 +14,8 @@ def regenerate_serves():
             serve_id = row["serve_id"]
             source_video = row["source_video"]
             output_clip = row["output_clip"]
-            start_time = row["start_time"]
-            end_time = row["end_time"]
+            start_frame = int(row["start_frame"])
+            end_frame = int(row["end_frame"])
 
             os.makedirs(os.path.dirname(output_clip), exist_ok=True)
 
@@ -31,21 +31,26 @@ def regenerate_serves():
             except Exception:
                 fps = None
 
+            # Convert frames to time for ffmpeg
+            if fps and fps > 0:
+                start_time = start_frame / fps
+                end_time = end_frame / fps
+            else:
+                print(f"Warning: Could not get FPS for {source_video}, using default 30fps")
+                fps = 30.0
+                start_time = start_frame / fps
+                end_time = end_frame / fps
+
             cmd = [
                 "ffmpeg", "-n",                # overwrite if exists
-                "-ss", start_time,
-                "-to", end_time,
+                "-ss", str(start_time),
+                "-to", str(end_time),
                 "-i", source_video,
                 "-an",                         # no audio
                 "-c:v", "libx264",             # reencode (clean split)
                 "-preset", "slow",
                 "-crf", "18",
-            ]
-
-            if fps and fps > 0:
-                cmd += ["-r", str(fps)]
-
-            cmd += [
+                "-r", str(fps),                # maintain original frame rate
                 output_clip,
             ]
 

@@ -50,14 +50,14 @@ def _delete_last_clip(output_dir, player):
         return True, last_id, last_path
     return False, None, None
 
-def _append_to_csv(player, serve_id, video_path, out_file, start_time, end_time, session_id):
+def _append_to_csv(player, serve_id, video_path, out_file, start_frame, end_frame, session_id):
     os.makedirs(os.path.dirname(SERVES_CSV), exist_ok=True)
     new_file = not os.path.exists(SERVES_CSV)
     with open(SERVES_CSV, "a", newline="") as f:
         writer = csv.writer(f)
         if new_file:
-            writer.writerow(["player","serve_id","session_id","source_video","output_clip","start_time","end_time"])
-        writer.writerow([player, f"{serve_id:03d}", session_id, video_path, out_file, f"{start_time:.3f}", f"{end_time:.3f}"])
+            writer.writerow(["player","serve_id","session_id","source_video","output_clip","start_frame","end_frame","landing_frame"])
+        writer.writerow([player, f"{serve_id:03d}", session_id, video_path, out_file, str(start_frame), str(end_frame), ""])
 
 def _remove_from_csv(player, serve_id, out_file):
     if not os.path.exists(SERVES_CSV):
@@ -95,15 +95,19 @@ def split_serves(video_path, output_dir, player, session_id, max_jobs=None):
     cv2.resizeWindow("split_serves", 1280, 720)  # Set reasonable default size
 
     serve_id = _next_serve_id(output_dir)
-    start_time = None
+    start_frame = None
 
     fast_active = False
     last_fast_key_time = 0.0
 
     # Track background encoding jobs
-    active_jobs = []  # list of dicts: {proc, player, serve_id, video_path, out_file, start_time, end_time}
+    active_jobs = []  # list of dicts: {proc, player, serve_id, video_path, out_file, start_frame, end_frame}
 
-    def _start_encode_job(start_s, end_s, out_path, current_fps):
+    def _start_encode_job(start_frame, end_frame, out_path, current_fps):
+        # Convert frames to time for ffmpeg
+        start_s = start_frame / current_fps
+        end_s = end_frame / current_fps
+        
         cmd = [
             "ffmpeg", "-n",
             "-ss", str(start_s),
@@ -124,8 +128,8 @@ def split_serves(video_path, output_dir, player, session_id, max_jobs=None):
             "session_id": session_id,
             "video_path": video_path,
             "out_file": out_path,
-            "start_time": start_s,
-            "end_time": end_s,
+            "start_frame": start_frame,
+            "end_frame": end_frame,
             "launched_at": time.time(),
         })
 
@@ -139,7 +143,7 @@ def split_serves(video_path, output_dir, player, session_id, max_jobs=None):
             if ret == 0 and os.path.exists(job["out_file"]):
                 elapsed = time.time() - job.get("launched_at", time.time())
                 print(f"Encoding complete in {elapsed:.1f}s: {job['out_file']}")
-                _append_to_csv(job["player"], job["serve_id"], job["video_path"], job["out_file"], job["start_time"], job["end_time"], job["session_id"])
+                _append_to_csv(job["player"], job["serve_id"], job["video_path"], job["out_file"], job["start_frame"], job["end_frame"], job["session_id"])
             else:
                 print(f"Encoding failed for serve {job['serve_id']:03d}: {job['out_file']}")
         active_jobs[:] = remaining
@@ -176,19 +180,21 @@ def split_serves(video_path, output_dir, player, session_id, max_jobs=None):
                 fast_active = False
 
         if key == ord("s"):
-            start_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
-            print(f"Serve {serve_id:03d} start at {start_time:.2f}s")
+            start_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+            start_time = start_frame / fps
+            print(f"Serve {serve_id:03d} start at frame {start_frame} ({start_time:.2f}s)")
 
-        elif key == ord("e") and start_time is not None:
-            end_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+        elif key == ord("e") and start_frame is not None:
+            end_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+            end_time = end_frame / fps
             out_file = os.path.join(output_dir, f"serve_{serve_id:03d}.mp4")
 
-            _start_encode_job(start_time, end_time, out_file, fps)
+            _start_encode_job(start_frame, end_frame, out_file, fps)
 
             serve_id += 1
-            start_time = None
+            start_frame = None
 
-        elif key == ord('d') and start_time is None:
+        elif key == ord('d') and start_frame is None:
             deleted, last_id, path = _delete_last_clip(output_dir, player)
             if deleted:
                 serve_id = last_id
@@ -205,7 +211,7 @@ def split_serves(video_path, output_dir, player, session_id, max_jobs=None):
             break
 
         # If we just ended a serve, skip fast-forward frame skipping this iteration
-        if fast_active and not (key == ord('e') and start_time is None):
+        if fast_active and not (key == ord('e') and start_frame is None):
             for _ in range(speed_multiplier - 1):
                 if not cap.grab():
                     break
