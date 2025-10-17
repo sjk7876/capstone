@@ -6,6 +6,8 @@ runs/
 models/*.pt
 datasets/
 .cursor/
+cvat_upload/
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
