@@ -57,6 +57,20 @@ def extract_all_frames(video_path, output_dir=None, every_n=1):
     
     return output_dir, is_temp
 
+def find_serves_in_session(player, session):
+    """Find all serve videos in a session directory."""
+    session_dir = f"data/videos/processed/{player}/session_{session}"
+    if not os.path.exists(session_dir):
+        return []
+    
+    serve_files = []
+    for file in os.listdir(session_dir):
+        if file.startswith("serve_") and file.endswith(".mp4"):
+            serve_id = file.replace("serve_", "").replace(".mp4", "")
+            serve_files.append((serve_id, os.path.join(session_dir, file)))
+    
+    return sorted(serve_files, key=lambda x: int(x[0]))
+
 def main():
     parser = argparse.ArgumentParser(description="Extract all frames from a video")
     parser.add_argument("--video", type=str, default=None,
@@ -66,7 +80,7 @@ def main():
     parser.add_argument("--session", type=int, default=None,
                        help="Session number (e.g., 1)")
     parser.add_argument("--serve", type=str, default=None,
-                       help="Serve ID (e.g., '1' or '001')")
+                       help="Serve ID (e.g., '1' or '001'). If not provided, extracts all serves in session")
     parser.add_argument("--output", type=str, default=None,
                        help="Output directory (auto-generated if not specified)")
     parser.add_argument("--list", action="store_true",
@@ -76,63 +90,81 @@ def main():
     
     args = parser.parse_args()
     
-    # Determine video path
-    video_path = args.video
-    if video_path is None:
-        if args.player and args.session is not None and args.serve:
-            # Normalize serve ID to 3-digit format
+    # Determine video path(s)
+    video_paths = []
+    if args.video:
+        video_paths = [args.video]
+    elif args.player and args.session is not None:
+        if args.serve:
+            # Single serve
             try:
                 serve_num = int(args.serve)
                 serve_id = f"{serve_num:03d}"
             except ValueError:
-                # If it's already a string like "001", use as-is
                 serve_id = args.serve
-            # Construct path from player/session/serve
             video_path = f"data/videos/processed/{args.player}/session_{args.session}/serve_{serve_id}.mp4"
+            video_paths = [video_path]
         else:
-            print("Error: Either provide --video or all of --player, --session, --serve")
-            return
-    
-    if not os.path.exists(video_path):
-        print(f"Video file not found: {video_path}")
-        return
-    
-    # Determine output directory
-    output_dir = args.output
-    if output_dir is None:
-        # Auto-generate output path based on video path
-        video_parts = Path(video_path).parts
-        if "processed" in video_parts:
-            processed_idx = video_parts.index("processed")
-            if len(video_parts) > processed_idx + 3:
-                player = video_parts[processed_idx + 1]
-                session = video_parts[processed_idx + 2]  # session_1
-                serve = video_parts[processed_idx + 3].replace(".mp4", "")  # serve_001
-                output_dir = f"data/frames/{player}_{session}_{serve}"
-            else:
-                print("Error: Could not parse video path for auto-output")
+            # All serves in session
+            serve_files = find_serves_in_session(args.player, args.session)
+            if not serve_files:
+                print(f"No serve videos found in data/videos/processed/{args.player}/session_{args.session}/")
                 return
-        else:
-            print("Error: Could not determine output directory")
-            return
-    
-    # Extract frames
-    result = extract_all_frames(video_path, output_dir, args.every)
-    if result is None:
+            print(f"Found {len(serve_files)} serves in session {args.session}:")
+            for serve_id, video_path in serve_files:
+                print(f"  serve_{serve_id}.mp4")
+            video_paths = [video_path for _, video_path in serve_files]
+    else:
+        print("Error: Either provide --video or --player and --session")
         return
     
-    output_dir, is_temp = result
+    # Process each video
+    for video_path in video_paths:
+        if not os.path.exists(video_path):
+            print(f"Video file not found: {video_path}")
+            continue
+        
+        print(f"\nProcessing: {video_path}")
+        
+        # Determine output directory
+        output_dir = args.output
+        if output_dir is None:
+            # Auto-generate output path based on video path
+            video_parts = Path(video_path).parts
+            if "processed" in video_parts:
+                processed_idx = video_parts.index("processed")
+                if len(video_parts) > processed_idx + 3:
+                    player = video_parts[processed_idx + 1]
+                    session = video_parts[processed_idx + 2]  # session_1
+                    serve = video_parts[processed_idx + 3].replace(".mp4", "")  # serve_001
+                    output_dir = f"data/frames/{player}_{session}_{serve}"
+                else:
+                    print(f"Error: Could not parse video path for auto-output: {video_path}")
+                    continue
+            else:
+                print(f"Error: Could not determine output directory for: {video_path}")
+                continue
+        
+        # Extract frames
+        result = extract_all_frames(video_path, output_dir, args.every)
+        if result is None:
+            continue
+        
+        output_dir, is_temp = result
+        
+        if args.list:
+            # List extracted frames
+            frame_files = sorted(Path(output_dir).glob("frame*.jpg"))
+            print(f"\nExtracted {len(frame_files)} frames from {os.path.basename(video_path)}:")
+            for i, frame_file in enumerate(frame_files[:10]):  # Show first 10
+                print(f"  {frame_file.name}")
+            if len(frame_files) > 10:
+                print(f"  ... and {len(frame_files) - 10} more")
+        
+        print(f"Frames saved to: {output_dir}")
     
-    if args.list:
-        # List extracted frames
-        frame_files = sorted(Path(output_dir).glob("frame*.jpg"))
-        print(f"\nExtracted {len(frame_files)} frames:")
-        for i, frame_file in enumerate(frame_files[:10]):  # Show first 10
-            print(f"  {frame_file.name}")
-        if len(frame_files) > 10:
-            print(f"  ... and {len(frame_files) - 10} more")
-    
-    print(f"\nFrames saved to: {output_dir}")
+    if len(video_paths) > 1:
+        print(f"\nCompleted processing {len(video_paths)} videos")
 
 if __name__ == "__main__":
     main()
