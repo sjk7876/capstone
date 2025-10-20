@@ -61,6 +61,7 @@ def run_yolo_on_serves():
             f"source={d}",
             f"project={YOLO_RUNS_DIR}",
             f"name={name}",
+            'save=False',
             "imgsz=1920",
             "save_txt=True",
             "exist_ok=True",
@@ -104,7 +105,7 @@ def merge_predictions(folders):
     """Merge YOLO outputs (labels) with original clean images from SERVE_DIR."""
     images_dir = os.path.join(OUTPUT_DIR, "images")
     labels_dir = os.path.join(OUTPUT_DIR, "labels")
-    i = 0
+    total_files = 0
 
     for folder in folders:
         serve_name = os.path.basename(folder)
@@ -121,19 +122,23 @@ def merge_predictions(folders):
         ])
 
         for img_name in serve_images:
-            base = f"frame_{i:06d}"
+            # Extract frame number from original filename (e.g., frame000000.jpg -> 000000)
+            frame_match = img_name.replace('frame', '').replace('.jpg', '')
+            
+            # Create new filename: serve_name_frame000000.jpg
+            base = f"{serve_name}_{img_name}"
             src_img = os.path.join(serve_src_dir, img_name)
             src_txt = os.path.join(pred_labels_dir, os.path.splitext(img_name)[0] + ".txt")
 
-            dst_img = os.path.join(images_dir, f"{base}.jpg")
-            dst_txt = os.path.join(labels_dir, f"{base}.txt")
+            dst_img = os.path.join(images_dir, base)
+            dst_txt = os.path.join(labels_dir, os.path.splitext(base)[0] + ".txt")
 
             shutil.copy(src_img, dst_img)
             if os.path.exists(src_txt):
                 shutil.copy(src_txt, dst_txt)
-            i += 1
+            total_files += 1
 
-    print(f"Merged {i} clean frames from {len(folders)} serve folders.")
+    print(f"Merged {total_files} clean frames from {len(folders)} serve folders.")
 
 
 def make_yolo_zip():
