@@ -12,8 +12,8 @@ def format_datasets():
     """Format datasets/obj_train_data/ into datasets/ball_yolo/ with 80-20 split."""
     
     # Source and destination paths
-    source_dir = Path("/home/spenc/dev/capstone/datasets/obj_train_data")
-    backup_dir = Path("/home/spenc/dev/capstone/datasets/ball_yolo")
+    source_dir = Path("datasets/obj_train_data")
+    backup_dir = Path("datasets/ball_yolo")
     
     # Create backup directory structure
     backup_dir.mkdir(parents=True, exist_ok=True)
