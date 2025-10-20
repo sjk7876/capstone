@@ -125,12 +125,12 @@ data/
 
 ### Training
 ```bash
-yolo detect train data=configs/ball.yaml model=yolov8s.pt imgsz=1280 batch=8 epochs=50
+yolo detect train data=configs/ball.yaml model=models/yolov8s.pt imgsz=1280 batch=8 epochs=50
 ```
 
 ### Prediction
 ```bash
-yolo detect predict model=runs/detect/train/weights/best.pt source=data/videos/processed/spencer/session_1/serve_001.mp4
+yolo detect predict model=models/best.pt source=data/videos/processed/spencer/session_1/serve_001.mp4
 ```
 
 ---
