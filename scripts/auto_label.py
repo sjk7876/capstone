@@ -61,6 +61,7 @@ def run_yolo_on_serves():
             f"source={d}",
             f"project={YOLO_RUNS_DIR}",
             f"name={name}",
+            "save=False",
             "imgsz=1920",
             "save_txt=True",
             "exist_ok=True",
