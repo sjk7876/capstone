@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import zipfile
+import argparse
 from datetime import datetime
 
 # ===============================
@@ -37,9 +38,9 @@ def ensure_dirs():
         os.makedirs(d, exist_ok=True)
 
 
-def run_yolo_on_serves():
-    """Run YOLO prediction on all serve folders."""
-    serve_folders = sorted(
+def run_yolo_on_serves(player=None, session=None, serve=None):
+    """Run YOLO prediction on serve folders, optionally filtered by player/session/serve."""
+    all_serve_folders = sorted(
         [
             os.path.join(SERVE_DIR, d)
             for d in os.listdir(SERVE_DIR)
@@ -47,11 +48,50 @@ def run_yolo_on_serves():
         ]
     )
 
-    if not serve_folders:
+    if not all_serve_folders:
         print("No serve folders found in data/frames/")
         return []
 
-    print(f"Running YOLO on {len(serve_folders)} serve folders...")
+    # Filter serve folders based on arguments
+    serve_folders = []
+    for folder in all_serve_folders:
+        folder_name = os.path.basename(folder)
+        
+        # Parse folder name: player_session_X_serve_XXX
+        parts = folder_name.split('_')
+        if len(parts) >= 4 and parts[1] == 'session' and parts[3] == 'serve':
+            folder_player = parts[0]
+            folder_session = int(parts[2])
+            folder_serve = int(parts[4])
+            
+            # Apply filters
+            if player and folder_player != player:
+                continue
+            if session is not None and folder_session != session:
+                continue
+            if serve is not None:
+                serve_num = int(serve) if serve.isdigit() else int(serve)
+                if folder_serve != serve_num:
+                    continue
+            
+            serve_folders.append(folder)
+
+    if not serve_folders:
+        print("No serve folders match the specified criteria")
+        return []
+
+    # Show what we're processing
+    filter_desc = []
+    if player:
+        filter_desc.append(f"player={player}")
+    if session is not None:
+        filter_desc.append(f"session={session}")
+    if serve is not None:
+        filter_desc.append(f"serve={serve}")
+    
+    filter_str = f" (filtered: {', '.join(filter_desc)})" if filter_desc else ""
+    print(f"Running YOLO on {len(serve_folders)} serve folders{filter_str}...")
+    
     for d in serve_folders:
         name = os.path.basename(d)
         print(f"  → {name}")
@@ -65,7 +105,8 @@ def run_yolo_on_serves():
             "imgsz=1920",
             "save_txt=True",
             "exist_ok=True",
-            "verbose=false"
+            "verbose=false",
+            "patience=10"
         ])
     return serve_folders
 
@@ -113,7 +154,7 @@ def merge_predictions(folders):
         pred_labels_dir = os.path.join(folder, "labels")
 
         if not os.path.exists(serve_src_dir):
-            print(f"⚠️ Warning: No matching original serve folder found for {serve_name}")
+            print(f"Warning: No matching original serve folder found for {serve_name}")
             continue
 
         serve_images = sorted([
@@ -195,6 +236,44 @@ def make_yolo_zip():
     print(" • Ready for manual upload in CVAT → Upload Annotations → YOLO 1.1\n")
 
 
+def cleanup_temp_files(keep_images_zip=False):
+    """Clean up temporary files and directories after processing."""
+    import shutil
+    
+    # Remove the cvat_upload directory
+    if os.path.exists(OUTPUT_DIR):
+        print(f"Cleaning up temporary directory: {OUTPUT_DIR}")
+        shutil.rmtree(OUTPUT_DIR)
+        print("Temporary files cleaned up.")
+    
+    # Remove the images zip file (unless keeping it)
+    images_zip = os.path.abspath("serve_images.zip")
+    if os.path.exists(images_zip):
+        if keep_images_zip:
+            print(f"Keeping images zip: {images_zip}")
+        else:
+            os.remove(images_zip)
+            print(f"Removed temporary zip: {images_zip}")
+    
+    # Remove serve folders from runs directory
+    if os.path.exists(YOLO_RUNS_DIR):
+        serve_folders = []
+        for item in os.listdir(YOLO_RUNS_DIR):
+            item_path = os.path.join(YOLO_RUNS_DIR, item)
+            if os.path.isdir(item_path):
+                # Check if it's a serve folder (contains "serve" or "session" in name)
+                name_lower = item.lower()
+                if ("serve" in name_lower or "session" in name_lower) and not name_lower.startswith(("train", "val")):
+                    serve_folders.append(item_path)
+        
+        for folder in serve_folders:
+            print(f"Removing serve folder: {folder}")
+            shutil.rmtree(folder)
+        
+        if serve_folders:
+            print(f"Cleaned up {len(serve_folders)} serve folders from runs directory")
+
+
 
 def upload_to_cvat(task_name):
     """Upload images to CVAT, then make YOLO zip for manual annotation upload."""
@@ -240,19 +319,44 @@ def upload_to_cvat(task_name):
 
     try:
         subprocess.run(create_cmd, check=True)
-        print("✅ Uploaded images to CVAT.")
+        print("Uploaded images to CVAT.")
     except subprocess.CalledProcessError as e:
-        print("⚠️ CVAT image upload failed:")
+        print("CVAT image upload failed:")
         print(e)
         return
 
     # after uploading, make the manual YOLO zip
     make_yolo_zip()
+    
+    # Clean up temporary files
+    cleanup_temp_files()
+
+
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description="Auto-label serves with YOLO and upload to CVAT")
+    parser.add_argument('-n', '--no-cvat', action='store_true', 
+                       help='Disable CVAT upload (only create YOLO zip)')
+    parser.add_argument('-p', '--player', type=str, default=None,
+                       help='Process only serves from specific player (e.g., "spencer")')
+    parser.add_argument('-s', '--session', type=int, default=None,
+                       help='Process only serves from specific session (e.g., 1)')
+    parser.add_argument('--serve', type=str, default=None,
+                       help='Process only specific serve (e.g., "001" or "1")')
+    return parser.parse_args()
 
 
 def main():
+    args = parse_args()
+    
+    # Override CVAT_ENABLED if -n flag is used
+    global CVAT_ENABLED
+    if args.no_cvat:
+        CVAT_ENABLED = False
+        print("CVAT upload disabled via -n flag")
+    
     ensure_dirs()
-    serve_folders = run_yolo_on_serves()
+    serve_folders = run_yolo_on_serves(args.player, args.session, args.serve)
     folders = collect_prediction_folders()
     if not folders:
         print("No YOLO prediction folders found.")
@@ -260,6 +364,11 @@ def main():
     merge_predictions(folders)
     task_name = CVAT_TASK_NAME or generate_task_name(serve_folders)
     upload_to_cvat(task_name)
+    
+    # Clean up even if CVAT upload was disabled
+    if not CVAT_ENABLED:
+        make_yolo_zip()
+        cleanup_temp_files(keep_images_zip=True)
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ def extract_all_frames(video_path, output_dir=None, every_n=1):
         frame_id += 1
     
     cap.release()
-    print(f"Extracted {saved} frames from {video_path} → {output_dir}")
+    print(f"Extracted {saved} frames from {video_path} -> {output_dir}")
     
     return output_dir, is_temp
 

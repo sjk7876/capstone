@@ -38,7 +38,8 @@ def run_yolo_training():
         "model=models/yolov8s.pt",
         "imgsz=1280",
         "batch=8",
-        "epochs=50"
+        "epochs=50",
+        "patience=10"
     ]
     
     print("Running YOLO training...")
