@@ -161,8 +161,11 @@ def format_datasets():
     # Create symlinks for training files
     print("Creating symlinks for training files...")
     for label_file, frame_path in train_pairs:
-        # Create symlink for image
-        train_img_path = backup_dir / "images" / "train" / frame_path.name
+        # Create symlink for image with proper naming to match label format
+        # Extract the base name from label file (e.g., paarth_session_1_serve_001_frame000123)
+        label_base = label_file.stem  # Remove .txt extension
+        img_filename = f"{label_base}.jpg"  # Add .jpg extension
+        train_img_path = backup_dir / "images" / "train" / img_filename
         if not train_img_path.exists():
             train_img_path.symlink_to(frame_path.resolve())
         
@@ -174,8 +177,11 @@ def format_datasets():
     # Create symlinks for validation files
     print("Creating symlinks for validation files...")
     for label_file, frame_path in val_pairs:
-        # Create symlink for image
-        val_img_path = backup_dir / "images" / "val" / frame_path.name
+        # Create symlink for image with proper naming to match label format
+        # Extract the base name from label file (e.g., paarth_session_1_serve_001_frame000123)
+        label_base = label_file.stem  # Remove .txt extension
+        img_filename = f"{label_base}.jpg"  # Add .jpg extension
+        val_img_path = backup_dir / "images" / "val" / img_filename
         if not val_img_path.exists():
             val_img_path.symlink_to(frame_path.resolve())
         
