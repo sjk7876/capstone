@@ -106,9 +106,8 @@ def run_yolo_on_serves(player=None, session=None, serve=None):
             "save_txt=True",
             "exist_ok=True",
             "verbose=false",
-            "patience=10",
-            "conf=0.4",
-            "iou=0.5",
+            "conf=0.3",
+            "iou=0.65",
             "nms=True"
         ])
     return serve_folders

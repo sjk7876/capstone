@@ -37,9 +37,9 @@ def run_yolo_training():
         "data=configs/ball.yaml",
         "model=models/yolov8s.pt",
         "imgsz=1280",
-        "batch=8",
-        "epochs=50",
-        "patience=10"
+        "batch=12",
+        "epochs=100",
+        # "patience=25"
     ]
     
     print("Running YOLO training...")
