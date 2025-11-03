@@ -97,13 +97,6 @@ ezra,042,3,data/videos/raw/2025-10-15/session_3/20251015_133458.mp4,data/videos/
 ezra,043,3,data/videos/raw/2025-10-15/session_3/20251015_133458.mp4,data/videos/processed/ezra/session_3/serve_043.mp4,40260,40398,131
 ezra,044,3,data/videos/raw/2025-10-15/session_3/20251015_133458.mp4,data/videos/processed/ezra/session_3/serve_044.mp4,41005,41159,148
 ezra,045,3,data/videos/raw/2025-10-15/session_3/20251015_133458.mp4,data/videos/processed/ezra/session_3/serve_045.mp4,41622,41807,178
-bryan,001,4,data/videos/raw/2025-10-29/session_4/20251029_172702.mp4,data/videos/processed/bryan/session_4/serve_001.mp4,145,224,76
-bryan,002,4,data/videos/raw/2025-10-29/session_4/20251029_172702.mp4,data/videos/processed/bryan/session_4/serve_002.mp4,663,763,97
-bryan,003,4,data/videos/raw/2025-10-29/session_4/20251029_172702.mp4,data/videos/processed/bryan/session_4/serve_003.mp4,1166,1293,124
-bryan,004,4,data/videos/raw/2025-10-29/session_4/20251029_172702.mp4,data/videos/processed/bryan/session_4/serve_004.mp4,1799,1915,101
-bryan,005,4,data/videos/raw/2025-10-29/session_4/20251029_172702.mp4,data/videos/processed/bryan/session_4/serve_005.mp4,2246,2327,76
-bryan,006,4,data/videos/raw/2025-10-29/session_4/20251029_172702.mp4,data/videos/processed/bryan/session_4/serve_006.mp4,2720,2812,86
-bryan,007,4,data/videos/raw/2025-10-29/session_4/20251029_172702.mp4,data/videos/processed/bryan/session_4/serve_007.mp4,3775,3862,81
 cierra,001,4,data/videos/raw/2025-10-29/session_4/20251029_172151.mp4,data/videos/processed/cierra/session_4/serve_001.mp4,222,430,202
 cierra,002,4,data/videos/raw/2025-10-29/session_4/20251029_172151.mp4,data/videos/processed/cierra/session_4/serve_002.mp4,3330,3540,202
 cierra,003,4,data/videos/raw/2025-10-29/session_4/20251029_172151.mp4,data/videos/processed/cierra/session_4/serve_003.mp4,4663,4856,187
@@ -112,3 +105,10 @@ cierra,005,4,data/videos/raw/2025-10-29/session_4/20251029_172151.mp4,data/video
 cierra,006,4,data/videos/raw/2025-10-29/session_4/20251029_172151.mp4,data/videos/processed/cierra/session_4/serve_006.mp4,11702,11877,165
 cierra,007,4,data/videos/raw/2025-10-29/session_4/20251029_172151.mp4,data/videos/processed/cierra/session_4/serve_007.mp4,12766,12968,186
 spencer,001,4,data/videos/raw/2025-10-29/session_4/20251029_172615.mp4,data/videos/processed/spencer/session_4/serve_001.mp4,1291,1417,124
+bryan,001,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_001.mp4,285,447,
+bryan,002,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_002.mp4,1336,1520,
+bryan,003,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_003.mp4,2426,2580,
+bryan,004,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_004.mp4,3665,3800,
+bryan,005,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_005.mp4,4500,4659,
+bryan,006,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_006.mp4,5461,5613,
+bryan,007,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_007.mp4,7557,7715,
