@@ -17,7 +17,7 @@ OUTPUT_DIR = "cvat_upload"
 
 # CVAT settings
 CVAT_ENABLED = True
-CVAT_URL = "http://192.168.1.33:8080"
+CVAT_URL = "http://100.106.169.37:8080"
 CVAT_USERNAME = "admin"
 CVAT_PASSWORD = "admin"
 CVAT_PROJECT_ID = 1        # optional, or set to None
