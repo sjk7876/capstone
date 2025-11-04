@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to clean cache files, run YOLO training, and move the best model.
+Script to clean cache files, run YOLO hyperparameter tuning, and move the best model.
 """
 import os
 import shutil
@@ -30,50 +30,50 @@ def clean_cache_files():
     else:
         print(f"Removed {removed_count} cache files")
 
-def run_yolo_training():
-    """Run YOLO training with specified parameters."""
+def run_yolo_tuning():
+    """Run YOLO hyperparameter tuning with specified parameters."""
     cmd = [
         "yolo", "detect", "train",
         "data=configs/ball.yaml",
-        "model=models/yolov8s.pt",
-        "imgsz=1920",
-        "batch=4",
-        "epochs=100",
-        "patience=50"
+        "model=models/best.pt",
+        "imgsz=1280",
+        "batch=12",
+        "epochs=30",
+        "patience=15"
     ]
     
-    print("Running YOLO training...")
+    print("Running YOLO hyperparameter tuning...")
     print(f"Command: {' '.join(cmd)}")
     
     try:
         result = subprocess.run(cmd, check=True, capture_output=False)
-        print("Training completed successfully")
+        print("Tuning completed successfully")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"Training failed with exit code {e.returncode}")
+        print(f"Tuning failed with exit code {e.returncode}")
         return False
 
-def find_latest_training_run():
-    """Find the most recent training run directory."""
+def find_latest_tuning_run():
+    """Find the most recent tuning run directory."""
     runs_dir = Path("runs/detect")
     if not runs_dir.exists():
         print("No runs/detect directory found")
         return None
     
-    # Look for directories that start with 'train'
-    train_dirs = [d for d in runs_dir.iterdir() if d.is_dir() and d.name.startswith('train')]
+    # Look for directories that start with 'train' or 'tune'
+    tuning_dirs = [d for d in runs_dir.iterdir() if d.is_dir() and (d.name.startswith('train') or d.name.startswith('tune'))]
     
-    if not train_dirs:
-        print("No training directories found in runs/detect")
+    if not tuning_dirs:
+        print("No tuning directories found in runs/detect")
         return None
     
     # Sort by modification time, get the most recent
-    latest_dir = max(train_dirs, key=lambda d: d.stat().st_mtime)
-    print(f"Found latest training run: {latest_dir}")
+    latest_dir = max(tuning_dirs, key=lambda d: d.stat().st_mtime)
+    print(f"Found latest tuning run: {latest_dir}")
     return latest_dir
 
 def move_best_model(source_dir):
-    """Move best.pt from training run to models/ directory."""
+    """Move best.pt from tuning run to models/ directory."""
     weights_dir = source_dir / "weights"
     best_model_path = weights_dir / "best.pt"
     
@@ -105,20 +105,20 @@ def main():
     print("Cleaning cache files...")
     clean_cache_files()
     
-    print("\nStarting YOLO training...")
-    if not run_yolo_training():
-        print("Training failed, stopping")
+    print("\nStarting YOLO hyperparameter tuning...")
+    if not run_yolo_tuning():
+        print("Tuning failed, stopping")
         return
     
-    print("\nFinding latest training run...")
-    latest_run = find_latest_training_run()
+    print("\nFinding latest tuning run...")
+    latest_run = find_latest_tuning_run()
     if not latest_run:
-        print("Could not find training run, stopping")
+        print("Could not find tuning run, stopping")
         return
     
     print("\nMoving best model...")
     if move_best_model(latest_run):
-        print("\nAll done! Your trained model is now at models/best.pt")
+        print("\nAll done! Your tuned model is now at models/best.pt")
     else:
         print("\nFailed to move best model")
 
