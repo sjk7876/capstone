@@ -184,18 +184,20 @@ def find_sessions_without_annotations():
             if not serve_clips:
                 continue
             
-            # Check if annotation already exists
-            session_id = f"{session_dir.parent.name}_{session_dir.name}"
+            # Check if annotation already exists (one file per session, not per player)
+            session_id = session_dir.name
             annotation_file = annotations_dir / f"{session_id}.json"
             
             if not annotation_file.exists():
-                sessions_needing_annotation.append({
-                    "player": player_dir.name,
-                    "session": session_dir.name,
-                    "session_id": session_id,
-                    "serve_clip": serve_clips[0],  # Use first serve clip
-                    "annotation_file": annotation_file
-                })
+                # Check if this session is already in the list (avoid duplicates)
+                if not any(s['session_id'] == session_id for s in sessions_needing_annotation):
+                    sessions_needing_annotation.append({
+                        "player": player_dir.name,
+                        "session": session_dir.name,
+                        "session_id": session_id,
+                        "serve_clip": serve_clips[0],  # Use first serve clip
+                        "annotation_file": annotation_file
+                    })
     
     return sessions_needing_annotation
 
