@@ -1,0 +1,35 @@
+{
+  "session_id": "unknown",
+  "video_file": "data/videos/processed/cierra/session_4/serve_006.mp4",
+  "image_resolution": [
+    1920,
+    1080
+  ],
+  "court_corners": [
+    [
+      734,
+      646
+    ],
+    [
+      1200,
+      649
+    ],
+    [
+      1863,
+      951
+    ],
+    [
+      55,
+      924
+    ],
+    [
+      595,
+      704
+    ],
+    [
+      1335,
+      712
+    ]
+  ],
+  "annotator": "spencer"
+}

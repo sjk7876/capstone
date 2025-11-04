@@ -1,0 +1,35 @@
+{
+  "session_id": "unknown",
+  "video_file": "data/videos/processed/ezra/session_3/serve_032.mp4",
+  "image_resolution": [
+    1920,
+    1080
+  ],
+  "court_corners": [
+    [
+      733,
+      642
+    ],
+    [
+      1201,
+      643
+    ],
+    [
+      1861,
+      934
+    ],
+    [
+      77,
+      919
+    ],
+    [
+      598,
+      700
+    ],
+    [
+      1337,
+      705
+    ]
+  ],
+  "annotator": "spencer"
+}
