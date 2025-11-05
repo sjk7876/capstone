@@ -18,5 +18,9 @@ pdf:
 	$(PDFLATEX) $(FILE)
 #	open $(FILE).pdf # this might not work for you
 
+draft:
+	# $(LATEX) $(FILE)
+	$(PDFLATEX) $(FILE)
+
 clean:
 	rm -f capstone.blg capstone.bbl capstone.pdf capstone.log capstone.aux 
