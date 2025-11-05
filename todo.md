@@ -1,0 +1,1 @@
+talk about ball choice and stuff somewhere
