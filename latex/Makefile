@@ -16,6 +16,7 @@ pdf:
 	$(BIBTEX) $(FILE)
 	# $(LATEX) $(FILE)
 	$(PDFLATEX) $(FILE)
+	$(PDFLATEX) $(FILE)
 #	open $(FILE).pdf # this might not work for you
 
 draft:
