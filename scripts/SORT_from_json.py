@@ -190,6 +190,14 @@ def run_sort_from_json(detect_json, output_json, conf_thresh=0.3, debug=True, vi
         detections = json.load(f)
 
     frames = sorted(map(int, detections.keys()))
+    if not frames:
+        # No detections found, save empty trajectory
+        os.makedirs(os.path.dirname(output_json), exist_ok=True)
+        with open(output_json, "w") as f:
+            json.dump([], f)
+        print(f"[warn] no detections found in {detect_json}, saved empty trajectory")
+        return
+    
     min_f, max_f = frames[0], frames[-1]
     for i in range(min_f, max_f + 1):
         if str(i) not in detections:

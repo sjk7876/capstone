@@ -2,6 +2,7 @@
 data/testing/
 data/videos/
 data/frames/
+data/visualized/
 runs/
 models/*.pt
 !models/best.pt
