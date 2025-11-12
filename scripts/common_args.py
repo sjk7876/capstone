@@ -5,14 +5,14 @@ import argparse
 import os
 
 
-def format_serve_number(serve):
+def format_serve_number(serve: str) -> str:
     """Format serve number with leading zeros (e.g., "1" -> "001")."""
     if serve.isdigit():
         return f"{int(serve):03d}"
     return serve
 
 
-def build_trajectory_paths(player, session, serve):
+def build_trajectory_paths(player: str, session: int, serve: str) -> tuple[str, str]:
     """Build video and trajectory JSON paths from player/session/serve."""
     serve_str = format_serve_number(serve)
     
@@ -22,7 +22,7 @@ def build_trajectory_paths(player, session, serve):
     return video_path, json_path
 
 
-def add_player_session_serve_args(parser):
+def add_player_session_serve_args(parser: argparse.ArgumentParser) -> None:
     """
     Add common player/session/serve arguments to an ArgumentParser.
     
@@ -34,11 +34,11 @@ def add_player_session_serve_args(parser):
                        help='Player name (e.g., "spencer")')
     parser.add_argument('-s', '--session', type=int, default=None,
                        help='Session number (e.g., 1)')
-    parser.add_argument('--serve', type=str, default=None,
+    parser.add_argument('-e', '--serve', type=str, default=None,
                        help='Serve number (e.g., "001" or "1")')
 
 
-def resolve_trajectory_paths(args, require_output=True):
+def resolve_trajectory_paths(args: argparse.Namespace, require_output: bool = True) -> tuple[str, str]:
     """
     Resolve video and JSON paths from args (either player/session/serve or direct paths).
     
@@ -75,7 +75,7 @@ def resolve_trajectory_paths(args, require_output=True):
     return video_path, json_path
 
 
-def validate_video_exists(video_path):
+def validate_video_exists(video_path: str) -> None:
     """Validate that video file exists, exit if not."""
     if not os.path.exists(video_path):
         raise SystemExit(f"Error: Video file not found: {video_path}")
