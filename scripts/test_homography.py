@@ -28,8 +28,8 @@ def warp_point(u, v, H):
     q = H @ p
     return q[0] / q[2], q[1] / q[2]
 
-def test_homography(session_id, show=True):
-    """Test homography by measuring court dimensions and showing warped view."""
+def test_homography(session_id, show=False, save_path=None):
+    """Test homography by measuring court dimensions and saving/showing warped view."""
     ann = load_corners(session_id)
     H = load_homography(session_id)
 
@@ -74,6 +74,17 @@ def test_homography(session_id, show=True):
     M, _ = cv2.findHomography(pts, dst_pts)
     top = cv2.warpPerspective(frame, M, (W, Hm))
 
+    # Save images
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        base_path = save_path.rsplit(".", 1)[0] if "." in save_path else save_path
+        original_path = f"{base_path}_original.png"
+        warped_path = f"{base_path}_warped.png"
+        cv2.imwrite(original_path, frame)
+        cv2.imwrite(warped_path, top)
+        print(f"Saved original → {original_path}")
+        print(f"Saved warped → {warped_path}")
+
     if show:
         cv2.imshow("original (with points)", frame)
         cv2.imshow("warped top-down", top)
@@ -87,7 +98,8 @@ def main():
     # Common player/session/serve arguments (only session is required)
     add_player_session_serve_args(parser)
     
-    parser.add_argument("--no-show", action="store_true", help="Skip GUI display")
+    parser.add_argument("--show", action="store_true", help="Display images in GUI")
+    parser.add_argument("--output", type=str, help="Output path for images (default: auto-generated)")
     
     args = parser.parse_args()
     
@@ -95,7 +107,14 @@ def main():
         parser.error("Must specify --session")
     
     session_id = f"session_{args.session}"
-    test_homography(session_id, show=not args.no_show)
+    
+    # Auto-generate save path if not provided
+    if args.output is None:
+        save_path = f"data/visualizations/homography/{session_id}.png"
+    else:
+        save_path = args.output
+    
+    test_homography(session_id, show=args.show, save_path=save_path)
 
 if __name__ == "__main__":
     main()
