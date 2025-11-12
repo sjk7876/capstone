@@ -22,6 +22,7 @@ def run_yolo_cli(video_path, model_path, output_json):
         "imgsz=1920",
         "save_txt=True",
         "save_conf=True",
+        "save=False",
         f"project={project}",
         f"name={name}",
         "exist_ok=True",

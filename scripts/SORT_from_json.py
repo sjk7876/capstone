@@ -105,15 +105,19 @@ def merge_tracks(trajectories,
             order.append(cur)
             cur = nxt[cur]
 
-        # concatenate points; keep temporal order and then dedupe per-frame (keep later fragment’s point)
+        # concatenate points; keep temporal order and then dedupe per-frame (keep later fragment's point)
         pts = []
         for idx in order:
             pts.extend(frags[idx]["pts"])
         # de-dupe by frame (keep last occurrence)
         latest = {}
         for p in pts:
-            latest[p["frame"]] = p["center"]
-        merged_pts = [{"frame": f, "center": c} for f, c in sorted(latest.items())]
+            latest[p["frame"]] = {
+                "center": p["center"],
+                "size": p.get("size", [0.0, 0.0])  # fallback if size missing
+            }
+        merged_pts = [{"frame": f, "center": data["center"], "size": data["size"]} 
+                     for f, data in sorted(latest.items())]
         chains.append(merged_pts)
 
     # 5) any fragments not in a chain (isolated cycles shouldn't happen, but just in case)
@@ -127,8 +131,14 @@ def merge_tracks(trajectories,
         if k not in used and prev[k] is None and nxt[k] is None:
             # isolated single fragment
             tr = frags[k]["pts"]
-            latest = {p["frame"]: p["center"] for p in tr}
-            chains.append([{"frame": f, "center": c} for f, c in sorted(latest.items())])
+            latest = {}
+            for p in tr:
+                latest[p["frame"]] = {
+                    "center": p["center"],
+                    "size": p.get("size", [0.0, 0.0])  # fallback if size missing
+                }
+            chains.append([{"frame": f, "center": data["center"], "size": data["size"]} 
+                          for f, data in sorted(latest.items())])
 
     if debug:
         print(f"[merge_tracks] fragments={n}, candidates={len(edges)}, accepted={len(accepted)}, chains={len(chains)}")
@@ -226,9 +236,12 @@ def run_sort_from_json(detect_json, output_json, conf_thresh=0.3, debug=True, vi
         tracks = tracker.update(dets_np)
         for x1, y1, x2, y2, tid in tracks:
             cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+            width = x2 - x1
+            height = y2 - y1
             trajectories.setdefault(int(tid), []).append({
                 "frame": frame_idx,
-                "center": [float(cx), float(cy)]
+                "center": [float(cx), float(cy)],
+                "size": [float(width), float(height)]
             })
 
     merged = merge_tracks(trajectories, frame_gap_thresh=15, dist_thresh=250, debug=debug)
@@ -241,12 +254,15 @@ def run_sort_from_json(detect_json, output_json, conf_thresh=0.3, debug=True, vi
         # Collapse duplicates (keep last point per frame)
         frame_map = {}
         for p in served_track:
-            frame_map[p["frame"]] = p["center"]
+            frame_map[p["frame"]] = {
+                "center": p["center"],
+                "size": p.get("size", [0.0, 0.0])  # fallback if size missing
+            }
         
         # Rebuild sorted unique trajectory
         served_track = [
-            {"frame": f, "center": c}
-            for f, c in sorted(frame_map.items())
+            {"frame": f, "center": data["center"], "size": data["size"]}
+            for f, data in sorted(frame_map.items())
         ]
         
         with open(output_json, "w") as f:
