@@ -34,7 +34,7 @@ def run_yolo_tuning():
     """Run YOLO hyperparameter tuning with specified parameters."""
     cmd = [
         "yolo", "detect", "train",
-        "data=configs/ball.yaml",
+        "data=models/configs/ball.yaml",
         "model=models/best.pt",
         "imgsz=1280",
         "batch=12",

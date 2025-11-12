@@ -1,5 +1,4 @@
 ```
-├── configs
 ├── data
 │   ├── annotations
 │   │   └── court_corners
@@ -23,5 +22,6 @@
 │               └── session_4
 ├── datasets
 ├── models
+│   └── configs
 └── scripts
 ```

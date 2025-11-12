@@ -34,7 +34,7 @@ def run_yolo_training():
     """Run YOLO training with specified parameters."""
     cmd = [
         "yolo", "detect", "train",
-        "data=configs/ball.yaml",
+        "data=models/configs/ball.yaml",
         "model=models/yolov8s.pt",
         "imgsz=1920",
         "batch=4",

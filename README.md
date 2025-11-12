@@ -121,7 +121,7 @@ data/
 
 ### Training
 ```bash
-yolo detect train data=configs/ball.yaml model=models/yolov8s.pt imgsz=1280 batch=8 epochs=50
+yolo detect train data=models/configs/ball.yaml model=models/yolov8s.pt imgsz=1280 batch=8 epochs=50
 ```
 
 ### Prediction

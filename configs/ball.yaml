@@ -1,4 +1,4 @@
-# configs/ball.yaml
+# models/configs/ball.yaml
 # dataset config for YOLOv8 volleyball ball detection
 
 path: datasets/ball_yolo     # root dataset dir
