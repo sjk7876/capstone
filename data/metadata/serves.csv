@@ -105,10 +105,10 @@ cierra,005,4,data/videos/raw/2025-10-29/session_4/20251029_172151.mp4,data/video
 cierra,006,4,data/videos/raw/2025-10-29/session_4/20251029_172151.mp4,data/videos/processed/cierra/session_4/serve_006.mp4,11702,11877,165
 cierra,007,4,data/videos/raw/2025-10-29/session_4/20251029_172151.mp4,data/videos/processed/cierra/session_4/serve_007.mp4,12766,12968,186
 spencer,001,4,data/videos/raw/2025-10-29/session_4/20251029_172615.mp4,data/videos/processed/spencer/session_4/serve_001.mp4,1291,1417,124
-bryan,001,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_001.mp4,285,447,
-bryan,002,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_002.mp4,1336,1520,
-bryan,003,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_003.mp4,2426,2580,
-bryan,004,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_004.mp4,3665,3800,
-bryan,005,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_005.mp4,4500,4659,
-bryan,006,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_006.mp4,5461,5613,
-bryan,007,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_007.mp4,7557,7715,
+bryan,001,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_001.mp4,285,447,157
+bryan,002,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_002.mp4,1336,1520,184
+bryan,003,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_003.mp4,2426,2580,154
+bryan,004,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_004.mp4,3665,3800,134
+bryan,005,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_005.mp4,4500,4659,145
+bryan,006,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_006.mp4,5461,5613,151
+bryan,007,4,.\data\videos\raw\2025-10-29\session_4\20251029_172702.mp4,.\data\videos\processed\bryan\session_4\serve_007.mp4,7557,7715,154
