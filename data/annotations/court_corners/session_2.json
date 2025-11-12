@@ -1,5 +1,5 @@
 {
-  "session_id": "unknown",
+  "session_id": "session_2",
   "video_file": "data/videos/processed/ryan/session_2/serve_005.mp4",
   "image_resolution": [
     1920,
@@ -30,6 +30,5 @@
       1308,
       691
     ]
-  ],
-  "annotator": "spencer"
+  ]
 }

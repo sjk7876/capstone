@@ -1,5 +1,5 @@
 {
-  "session_id": "unknown",
+  "session_id": "session_4",
   "video_file": "data/videos/processed/cierra/session_4/serve_006.mp4",
   "image_resolution": [
     1920,
@@ -30,6 +30,5 @@
       1335,
       712
     ]
-  ],
-  "annotator": "spencer"
+  ]
 }

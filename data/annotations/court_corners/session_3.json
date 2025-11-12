@@ -1,5 +1,5 @@
 {
-  "session_id": "unknown",
+  "session_id": "session_3",
   "video_file": "data/videos/processed/ezra/session_3/serve_032.mp4",
   "image_resolution": [
     1920,
@@ -30,6 +30,5 @@
       1337,
       705
     ]
-  ],
-  "annotator": "spencer"
+  ]
 }

@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
 import cv2
 import json
 import os
 import argparse
-import glob
 from pathlib import Path
+from common_args import add_player_session_serve_args, build_trajectory_paths, validate_video_exists
 
-def annotate_court(video_path, output_path, annotator="spencer"):
+def annotate_court(video_path, output_path):
     """Interactive court annotation tool for 6 points: 4 corners + 2 center line points."""
     
     cap = cv2.VideoCapture(video_path)
@@ -15,8 +14,6 @@ def annotate_court(video_path, output_path, annotator="spencer"):
         return False
     
     # Get video properties
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     
@@ -129,23 +126,20 @@ def annotate_court(video_path, output_path, annotator="spencer"):
     
     # Save annotation if we have all 6 points
     if len(points) == 6:
-        # Extract session info from video path
+        # Extract session number from video path
         video_path_parts = Path(video_path).parts
         session_id = "unknown"
-        if "raw" in video_path_parts:
-            raw_idx = video_path_parts.index("raw")
-            if len(video_path_parts) > raw_idx + 2:
-                date_part = video_path_parts[raw_idx + 1]
-                session_part = video_path_parts[raw_idx + 2]
-                if session_part.startswith("session_"):
-                    session_id = f"{date_part}_{session_part}"
+        if "session_" in str(video_path):
+            for part in video_path_parts:
+                if part.startswith("session_"):
+                    session_id = part
+                    break
         
         annotation = {
             "session_id": session_id,
             "video_file": str(video_path),
             "image_resolution": [width, height],
-            "court_corners": points,
-            "annotator": annotator
+            "court_corners": points
         }
         
         # Ensure output directory exists
@@ -203,18 +197,16 @@ def find_sessions_without_annotations():
 
 def main():
     parser = argparse.ArgumentParser(description="Annotate court corners and center line points")
-    parser.add_argument("--video", type=str, default=None,
-                       help="Path to specific video file (optional, auto-detects if not provided)")
-    parser.add_argument("--output", type=str, default=None,
-                       help="Output JSON file path (auto-generated if not provided)")
-    parser.add_argument("--annotator", type=str, default="spencer",
-                       help="Name of annotator (default: spencer)")
+    
+    # Common player/session/serve arguments
+    add_player_session_serve_args(parser)
+    
     parser.add_argument("--auto", action="store_true",
                        help="Auto-detect and annotate all sessions without annotations")
     
     args = parser.parse_args()
     
-    if args.auto or (args.video is None and args.output is None):
+    if args.auto:
         # Auto-detect mode
         sessions = find_sessions_without_annotations()
         
@@ -228,7 +220,7 @@ def main():
         
         for session in sessions:
             print(f"\n--- Annotating {session['session_id']} ---")
-            success = annotate_court(str(session['serve_clip']), str(session['annotation_file']), args.annotator)
+            success = annotate_court(str(session['serve_clip']), str(session['annotation_file']))
             if success:
                 print(f"✓ Completed {session['session_id']}")
             else:
@@ -237,17 +229,30 @@ def main():
         
         print("\nAnnotation session complete!")
         
-    else:
-        # Manual mode
-        if args.video is None or args.output is None:
-            print("Error: Both --video and --output are required in manual mode")
-            return
+    elif args.player and args.session is not None:
+        # Use player/session to find a video and generate output path
+        if args.serve:
+            video_path, _ = build_trajectory_paths(args.player, args.session, args.serve)
+        else:
+            # Use first serve in session
+            session_dir = Path(f"data/videos/processed/{args.player}/session_{args.session}")
+            serve_clips = sorted(session_dir.glob("serve_*.mp4"))
+            if not serve_clips:
+                raise SystemExit(f"No serve videos found for {args.player}/session_{args.session}")
+            video_path = str(serve_clips[0])
         
-        success = annotate_court(args.video, args.output, args.annotator)
+        validate_video_exists(video_path)
+        
+        # Generate output path based on session
+        output_path = f"data/annotations/court_corners/session_{args.session}.json"
+        
+        success = annotate_court(video_path, output_path)
         if success:
             print("Annotation completed successfully!")
         else:
             print("Annotation failed or was cancelled.")
+    else:
+        parser.error("Must specify --auto OR (--player and --session)")
 
 if __name__ == "__main__":
     main()
