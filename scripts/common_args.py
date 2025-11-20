@@ -1,5 +1,8 @@
 """
 Common argument parsing utilities for scripts that work with player/session/serve data.
+
+Provides shared functions for argument parsing, path building, and validation
+across multiple scripts in the project.
 """
 import argparse
 import os

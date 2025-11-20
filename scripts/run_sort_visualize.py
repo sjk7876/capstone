@@ -1,3 +1,9 @@
+"""
+Run full detection and visualization pipeline: YOLO → SORT → Visualization.
+
+Automates the complete pipeline: runs YOLO detection, tracks ball with SORT algorithm,
+and creates trajectory visualization videos with overlaid ball path.
+"""
 import os
 import glob
 import json

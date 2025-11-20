@@ -1,3 +1,9 @@
+"""
+Edge detection utility using Canny algorithm.
+
+Simple utility script for detecting edges in images using OpenCV's Canny edge detector.
+Used for court line detection and image analysis.
+"""
 import cv2
 import numpy as np
 

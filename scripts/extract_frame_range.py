@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+"""
+Extract a specific range of frames from a video. (Deprecated)
+
+Extracts frames between start_frame and end_frame from a video file,
+useful for extracting specific segments or debugging frame-level issues.
+"""
 import cv2
 import os
 import argparse

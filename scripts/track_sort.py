@@ -1,3 +1,9 @@
+"""
+Track ball using SORT algorithm with real-time visualization. (Deprecated)
+
+Runs YOLO detection and SORT tracking in real-time, displaying results
+for debugging and validation of the tracking pipeline.
+"""
 import sys
 import cv2
 import json

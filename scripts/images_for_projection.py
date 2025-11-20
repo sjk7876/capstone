@@ -1,3 +1,9 @@
+"""
+Generate visualization images for trajectory projection analysis.
+
+Creates annotated images showing ball trajectory in both pixel and world coordinates,
+visualizing the homography transformation and projected landing locations.
+"""
 import os, json, argparse, numpy as np, csv, re, glob, cv2
 from common_args import add_player_session_serve_args, build_trajectory_paths, format_serve_number
 

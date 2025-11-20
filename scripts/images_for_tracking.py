@@ -1,3 +1,9 @@
+"""
+Generate visualization images for ball tracking analysis.
+
+Creates annotated images showing ball detections and tracking results
+for analysis and debugging of the tracking pipeline.
+"""
 import os
 import sys
 import json

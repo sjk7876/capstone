@@ -1,3 +1,9 @@
+"""
+Generate visualization images for landing frame analysis.
+
+Creates annotated images showing ball size, position, and estimated landing frames
+for analysis and validation of landing detection algorithms.
+"""
 import json
 import numpy as np
 import argparse

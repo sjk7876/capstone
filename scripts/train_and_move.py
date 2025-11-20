@@ -1,6 +1,8 @@
-#!/usr/bin/env python3
 """
-Script to clean cache files, run YOLO training, and move the best model.
+Train YOLO model from scratch and move best weights to models directory.
+
+Cleans cache files, runs YOLO training with optimized parameters (imgsz=1920, batch=4, epochs=100),
+and automatically moves best.pt from training run to models/best.pt with backup.
 """
 import os
 import shutil

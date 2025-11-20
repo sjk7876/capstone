@@ -1,3 +1,9 @@
+"""
+Compute homography matrix from court annotations.
+
+Calculates the transformation matrix that maps pixel coordinates to world coordinates
+(meters) based on annotated court corners and center line points.
+"""
 import os
 import json
 import cv2

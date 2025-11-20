@@ -1,3 +1,9 @@
+"""
+Visualize ball trajectory on video.
+
+Overlays ball trajectory path on serve videos using trajectory JSON data.
+Creates visualization videos showing the ball's path through the frame.
+"""
 import cv2
 import json
 import numpy as np

@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+"""
+Regenerate serve clips from serves.csv metadata.
+
+Re-extracts serve video clips using frame ranges stored in serves.csv,
+useful for regenerating clips after metadata updates or video processing changes.
+"""
 import csv
 import subprocess
 import os

@@ -1,3 +1,9 @@
+"""
+Run YOLO detection on serve videos and output detections as JSON.
+
+Runs YOLO ball detection on serve videos and saves bounding box detections
+in JSON format for further processing by tracking algorithms.
+"""
 import subprocess, os, json, argparse, glob, shutil
 from common_args import add_player_session_serve_args, format_serve_number, validate_video_exists
 

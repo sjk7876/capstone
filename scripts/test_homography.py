@@ -1,3 +1,9 @@
+"""
+Test and validate homography matrix computation.
+
+Visualizes homography transformation by warping court images and validating
+that pixel-to-world coordinate mapping is correct.
+"""
 import os
 import json
 import argparse

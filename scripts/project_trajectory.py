@@ -1,3 +1,9 @@
+"""
+Project landing location from pixel coordinates to world coordinates.
+
+Uses homography matrix to transform landing frame pixel coordinates to real-world
+court coordinates (meters) for landing location analysis.
+"""
 import os, json, argparse, numpy as np, csv, re, glob
 from common_args import add_player_session_serve_args, build_trajectory_paths, format_serve_number
 

@@ -1,3 +1,9 @@
+"""
+Estimate hit and landing frames from ball trajectory data.
+
+Analyzes trajectory JSON files to detect hit frame (strongest downward motion)
+and landing frame (lowest ball size after hit) using signal processing techniques.
+"""
 import json
 import numpy as np
 import argparse

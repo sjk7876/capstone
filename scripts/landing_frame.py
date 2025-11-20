@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+"""
+Label landing frames for serves.
+
+Interactive tool for marking the landing frame (when ball hits court) for each serve.
+Updates serves.csv with landing frame numbers.
+"""
 import cv2
 import csv
 import os

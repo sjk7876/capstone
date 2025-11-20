@@ -1,3 +1,9 @@
+"""
+Track ball detections using SORT algorithm.
+
+Takes YOLO detection JSON files and applies SORT (Simple Online and Realtime Tracking)
+to create smooth, continuous ball trajectories from frame-by-frame detections.
+"""
 import os
 import sys
 import json

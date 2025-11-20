@@ -1,3 +1,9 @@
+"""
+Annotate court corners and center line points for homography computation.
+
+Interactive tool for clicking 6 points on the court (4 corners + 2 center line points)
+to enable pixel-to-world coordinate transformation.
+"""
 import cv2
 import json
 import os

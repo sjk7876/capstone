@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+"""
+Split raw video session into individual serve clips.
+
+Interactive tool for manually marking serve start/end points in raw session videos.
+Outputs individual serve clips and logs metadata to serves.csv.
+"""
 import cv2
 import subprocess
 import os
@@ -231,7 +236,23 @@ def split_serves(video_path, output_dir, player, session_id, max_jobs=None):
     cv2.destroyAllWindows()
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Split raw video session into individual serve clips",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python3 scripts/split_serves.py \\
+    --video data/videos/raw/2025-01-15/session_1/recording.mp4 \\
+    --out data/videos/processed \\
+    --player spencer
+
+  python3 scripts/split_serves.py \\
+    --video data/videos/raw/2025-01-15/session_2/recording.mp4 \\
+    --out data/videos/processed \\
+    --player spencer \\
+    --jobs 4
+        """
+    )
     parser.add_argument("--video", type=str, required=True,
                         help="Path to raw input video")
     parser.add_argument("--out", type=str, required=True,
@@ -242,8 +263,7 @@ def main():
                         help="Max parallel encodes (optional)")
     args = parser.parse_args()
 
-    # Strictly require new raw path format for session detection.
-    # Expected: data/videos/raw/YYYY-MM-DD/session_<num>/filename.mp4
+    # Auto-detect session from path format: data/videos/raw/YYYY-MM-DD/session_<num>/filename.mp4
     session_id = None
     try:
         norm = os.path.normpath(args.video)
@@ -256,9 +276,9 @@ def main():
                     session_id = int(session_part[8:])
     except Exception:
         session_id = None
+    
     if session_id is None:
-        print("Error: Could not detect session from raw path. Expected data/videos/raw/YYYY-MM-DD/session_<num>/filename.mp4")
-        return
+        parser.error("Could not detect session from video path. Expected format: data/videos/raw/YYYY-MM-DD/session_<num>/filename.mp4")
 
     split_serves(args.video, args.out, args.player, session_id, args.jobs)
 

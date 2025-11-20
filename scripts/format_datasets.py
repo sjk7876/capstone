@@ -1,8 +1,9 @@
-#!/usr/bin/env python3
 """
-Script to format datasets from labels-only workflow.
+Format datasets from labels-only workflow into train/val splits.
+
 Takes labels in format player_session_#_serve_#_frame#.txt and automatically
 grabs corresponding frames from data/frames/ or extracts them if missing.
+Creates 80/20 train/validation split with reproducible random seed.
 """
 
 import os

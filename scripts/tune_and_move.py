@@ -1,6 +1,8 @@
-#!/usr/bin/env python3
 """
-Script to clean cache files, run YOLO hyperparameter tuning, and move the best model.
+Tune YOLO model hyperparameters and move best weights to models directory.
+
+Cleans cache files, runs YOLO fine-tuning with tuning parameters (imgsz=1280, batch=12, epochs=30),
+starting from models/best.pt, and automatically moves tuned best.pt with backup.
 """
 import os
 import shutil

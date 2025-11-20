@@ -1,3 +1,9 @@
+"""
+Auto-label serves with YOLO and upload to CVAT.
+
+Runs YOLO detection on extracted frames, creates CVAT-compatible annotation packages,
+and optionally uploads to CVAT server for manual review/correction.
+"""
 import os
 import shutil
 import subprocess

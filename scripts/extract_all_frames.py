@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+"""
+Extract all frames from serve videos.
+
+Extracts every frame from specified serve videos for annotation or analysis.
+Creates per-serve frame folders in data/frames/.
+"""
 import cv2
 import os
 import argparse

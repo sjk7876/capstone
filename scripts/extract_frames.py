@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+"""
+Extract evenly-spaced frames from serve videos. (Deprecated)
+
+Samples ~30-40 evenly spaced frames per serve video for training data preparation.
+"""
 import cv2
 import os
 import argparse
