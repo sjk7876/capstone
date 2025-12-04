@@ -34,6 +34,7 @@ def estimate_hit_and_landing(track):
     size = np.sqrt(ws * hs)
 
     # --- smoothing ---
+    # should always be 9
     window_length = min(9, len(track) if len(track) % 2 == 1 else len(track) - 1)
     if window_length < 3:
         window_length = 3

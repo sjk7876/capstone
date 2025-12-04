@@ -41,6 +41,17 @@ def add_player_session_serve_args(parser: argparse.ArgumentParser) -> None:
                        help='Serve number (e.g., "001" or "1")')
 
 
+def add_user_mode_arg(parser: argparse.ArgumentParser) -> None:
+    """
+    Add user mode argument to an ArgumentParser.
+    
+    Args:
+        parser: argparse.ArgumentParser instance
+    """
+    parser.add_argument('-u', '--user-mode', action='store_true',
+                       help='User mode: use user/ paths instead of data/ paths')
+
+
 def resolve_trajectory_paths(args: argparse.Namespace, require_output: bool = True) -> tuple[str, str]:
     """
     Resolve video and JSON paths from args (either player/session/serve or direct paths).
@@ -82,4 +93,35 @@ def validate_video_exists(video_path: str) -> None:
     """Validate that video file exists, exit if not."""
     if not os.path.exists(video_path):
         raise SystemExit(f"Error: Video file not found: {video_path}")
+
+
+def build_user_paths(player: str, session: int, serve: str) -> tuple[str, str, str]:
+    """
+    Build user mode paths for video, detection JSON, and trajectory JSON.
+    
+    Args:
+        player: Player name
+        session: Session number
+        serve: Serve number (will be formatted)
+    
+    Returns:
+        tuple: (video_path, detect_json_path, traj_json_path)
+    """
+    serve_str = format_serve_number(serve)
+    
+    video_path = f"user/videos/{player}/session_{session}/serve_{serve_str}.mp4"
+    detect_json = f"user/detections/{player}/session_{session}/serve_{serve_str}.json"
+    traj_json = f"user/trajectories/{player}/session_{session}/serve_{serve_str}.json"
+    
+    return video_path, detect_json, traj_json
+
+
+def get_user_serves_csv_path() -> str:
+    """Get path to user serves CSV file."""
+    return "user/user_serves.csv"
+
+
+def get_user_videos_dir() -> str:
+    """Get path to user videos directory."""
+    return "user/videos"
 

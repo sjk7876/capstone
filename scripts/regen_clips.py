@@ -8,11 +8,19 @@ import csv
 import subprocess
 import os
 import cv2
+import argparse
+import sys
+
+# Add scripts directory to path for imports
+script_dir = os.path.dirname(__file__)
+sys.path.insert(0, script_dir)
+
+from common_args import add_user_mode_arg, get_user_serves_csv_path
 
 SERVES_CSV = "data/metadata/serves.csv"
 
-def regenerate_serves():
-    with open(SERVES_CSV, newline="") as f:
+def regenerate_serves(csv_path):
+    with open(csv_path, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             player = row["player"]
@@ -65,4 +73,30 @@ def regenerate_serves():
                 print(result.stderr.decode())
 
 if __name__ == "__main__":
-    regenerate_serves()
+    parser = argparse.ArgumentParser(
+        description="Regenerate serve clips from serves.csv metadata",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Regenerate clips from data/metadata/serves.csv
+  python scripts/regen_clips.py
+
+  # Regenerate clips from user/user_serves.csv
+  python scripts/regen_clips.py --user-mode
+        """
+    )
+    add_user_mode_arg(parser)
+    args = parser.parse_args()
+    
+    if args.user_mode:
+        csv_path = get_user_serves_csv_path()
+        print(f"Using user mode: {csv_path}")
+    else:
+        csv_path = SERVES_CSV
+        print(f"Using data mode: {csv_path}")
+    
+    if not os.path.exists(csv_path):
+        print(f"Error: CSV file not found: {csv_path}")
+        sys.exit(1)
+    
+    regenerate_serves(csv_path)

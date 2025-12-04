@@ -6,13 +6,33 @@ Calculates the transformation matrix that maps pixel coordinates to world coordi
 """
 import os
 import json
+import csv
 import cv2
 import numpy as np
 import argparse
-from common_args import add_player_session_serve_args
+from common_args import add_player_session_serve_args, add_user_mode_arg
 
-def compute_homography(session_id):
-    ann_path = f"data/annotations/court_corners/{session_id}.json"
+def get_court_corners_path(session_id, user_mode=False):
+    """Get court corners path from CSV or fallback to direct path."""
+    if user_mode:
+        # Try CSV first
+        csv_path = "user/court_corners.csv"
+        if os.path.exists(csv_path):
+            with open(csv_path, "r", newline="") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row["session_id"] == session_id:
+                        corners_path = row["court_corners_path"]
+                        if os.path.exists(corners_path):
+                            return corners_path
+        # Fallback to direct path
+        return f"user/annotations/court_corners/{session_id}.json"
+    else:
+        return f"data/annotations/court_corners/{session_id}.json"
+
+
+def compute_homography(session_id, user_mode=False):
+    ann_path = get_court_corners_path(session_id, user_mode)
     if not os.path.exists(ann_path):
         print(f"[!] missing corner file: {ann_path}")
         return
@@ -50,8 +70,12 @@ def compute_homography(session_id):
         print(f"Homography failed for {session_id}")
         return
 
-    os.makedirs("data/calibration/homographies", exist_ok=True)
-    out_path = f"data/calibration/homographies/{session_id}.json"
+    if user_mode:
+        os.makedirs("user/calibration/homographies", exist_ok=True)
+        out_path = f"user/calibration/homographies/{session_id}.json"
+    else:
+        os.makedirs("data/calibration/homographies", exist_ok=True)
+        out_path = f"data/calibration/homographies/{session_id}.json"
 
     out = {
         "session_id": session_id,
@@ -79,6 +103,7 @@ def main():
     
     # Common player/session/serve arguments (only session is required)
     add_player_session_serve_args(parser)
+    add_user_mode_arg(parser)
     
     args = parser.parse_args()
     
@@ -86,7 +111,7 @@ def main():
         parser.error("Must specify --session")
     
     session_id = f"session_{args.session}"
-    compute_homography(session_id)
+    compute_homography(session_id, args.user_mode)
 
 
 if __name__ == "__main__":
