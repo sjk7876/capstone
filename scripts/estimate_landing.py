@@ -201,51 +201,7 @@ def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
             landing_frame = hit_frame + FALLBACK_LANDING_OFFSET
 
     return landing_frame
-
-# def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
-#     """Estimate landing frame from ball size and motion patterns."""
-#     roll_win = ROLLING_WINDOW_MIN
-#     if len(size_s) < roll_win:
-#         roll_win = max(ROLLING_WINDOW_MIN, len(size_s) // 2 * 2 + 1)  # odd window, at least ROLLING_WINDOW_MIN
-
-#     rolling = np.convolve(size_s, np.ones(roll_win) / roll_win, mode="valid")
-#     offset = roll_win // 2
-#     roll_frames = frames[offset : offset + len(rolling)]
-
-#     # only look sufficiently after hit so we don't pick contact/toss
-#     mask = roll_frames > hit_frame + LANDING_SEARCH_OFFSET
-#     if np.any(mask):
-#         landing_idx_local = np.argmin(rolling[mask])
-#         landing_frame = int(roll_frames[mask][landing_idx_local])
-#     else:
-#         # fallback: global min of smoothed size
-#         landing_frame = int(frames[np.argmin(size_s)])
-
-#     # fine-tune landing: local inflection near min(size)
-#     mins, _ = find_peaks(-size_s, prominence=PEAK_PROMINENCE)
-#     nearest = None
-#     for idx in mins:
-#         if abs(frames[idx] - landing_frame) <= PEAK_MATCH_TOLERANCE:
-#             nearest = idx
-#             break
-
-#     if nearest is not None:
-#         left, right = max(0, nearest - REFINEMENT_WINDOW_LEFT), min(len(frames), nearest + REFINEMENT_WINDOW_RIGHT)
-#         local_range = np.arange(left, right)
-#         if len(local_range) > 0:
-#             land_refine = local_range[np.argmax(np.abs(np.gradient(dy[local_range])))]
-#             landing_frame = int(frames[land_refine])
-
-#     # sanity: enforce landing after hit
-#     if landing_frame <= hit_frame:
-#         after_hit = np.where(frames > hit_frame)[0]
-#         if len(after_hit):
-#             landing_frame = int(frames[after_hit[np.argmin(size_s[after_hit])]])
-#         else:
-#             landing_frame = hit_frame + FALLBACK_LANDING_OFFSET
-
-#     return landing_frame
-
+    
 
 def estimate_hit_and_landing(track):
     if not track or len(track) < MIN_TRACK_LENGTH:
