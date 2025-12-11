@@ -1,0 +1,2 @@
+session_id,video_path,court_corners_path
+session_1,user/data/videos/spencer/session_1/serve_001.mp4,user/data/annotations/court_corners/session_1.json
