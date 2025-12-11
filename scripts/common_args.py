@@ -109,19 +109,19 @@ def build_user_paths(player: str, session: int, serve: str) -> tuple[str, str, s
     """
     serve_str = format_serve_number(serve)
     
-    video_path = f"user/videos/{player}/session_{session}/serve_{serve_str}.mp4"
-    detect_json = f"user/detections/{player}/session_{session}/serve_{serve_str}.json"
-    traj_json = f"user/trajectories/{player}/session_{session}/serve_{serve_str}.json"
+    video_path = f"user/data/videos/{player}/session_{session}/serve_{serve_str}.mp4"
+    detect_json = f"user/data/detections/{player}/session_{session}/serve_{serve_str}.json"
+    traj_json = f"user/data/trajectories/{player}/session_{session}/serve_{serve_str}.json"
     
     return video_path, detect_json, traj_json
 
 
 def get_user_serves_csv_path() -> str:
     """Get path to user serves CSV file."""
-    return "user/user_serves.csv"
+    return "user/data/user_serves.csv"
 
 
 def get_user_videos_dir() -> str:
     """Get path to user videos directory."""
-    return "user/videos"
+    return "user/data/videos"
 

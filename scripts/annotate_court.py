@@ -302,8 +302,8 @@ def annotate_court(input_path, output_path, is_image=False):
 
 
 def update_court_corners_csv(session_id, video_path, corners_path):
-    """Update user/court_corners.csv with new annotation entry."""
-    csv_path = "user/court_corners.csv"
+    """Update user/data/court_corners.csv with new annotation entry."""
+    csv_path = "user/data/court_corners.csv"
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     
     # Read existing rows
@@ -342,8 +342,8 @@ def update_court_corners_csv(session_id, video_path, corners_path):
     print(f"Updated {csv_path} with session {session_id}")
 
 def get_court_corners_from_csv(session_id):
-    """Get court corners path from user/court_corners.csv for a given session."""
-    csv_path = "user/court_corners.csv"
+    """Get court corners path from user/data/court_corners.csv for a given session."""
+    csv_path = "user/data/court_corners.csv"
     if not os.path.exists(csv_path):
         return None
     
@@ -358,8 +358,8 @@ def get_court_corners_from_csv(session_id):
 def find_sessions_without_annotations(user_mode=False):
     """Find sessions that don't have court corner annotations yet."""
     if user_mode:
-        processed_dir = Path("user/videos")
-        annotations_dir = Path("user/annotations/court_corners")
+        processed_dir = Path("user/data/videos")
+        annotations_dir = Path("user/data/annotations/court_corners")
     else:
         processed_dir = Path("data/videos/processed")
         annotations_dir = Path("data/annotations/court_corners")
@@ -456,14 +456,14 @@ def main():
                 video_path, _, _ = build_user_paths(args.player, args.session, args.serve)
             else:
                 # Use first serve in session
-                session_dir = Path(f"user/videos/{args.player}/session_{args.session}")
+                session_dir = Path(f"user/data/videos/{args.player}/session_{args.session}")
                 serve_clips = sorted(session_dir.glob("serve_*.mp4"))
                 if not serve_clips:
                     raise SystemExit(f"No serve videos found for {args.player}/session_{args.session}")
                 video_path = str(serve_clips[0])
             
             # Generate output path based on session
-            output_path = f"user/annotations/court_corners/session_{args.session}.json"
+            output_path = f"user/data/annotations/court_corners/session_{args.session}.json"
         else:
             if args.serve:
                 video_path, _ = build_trajectory_paths(args.player, args.session, args.serve)

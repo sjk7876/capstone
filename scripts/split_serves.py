@@ -324,7 +324,7 @@ Examples:
     # In user mode, auto-increment session number from CSV
     if args.user_mode:
         session_id = _next_session_id(user_mode=True)
-        print(f"Using session {session_id} (auto-incremented from user/user_serves.csv)")
+        print(f"Using session {session_id} (auto-incremented from user/data/user_serves.csv)")
     else:
         # Auto-detect session from path format: data/videos/raw/YYYY-MM-DD/session_<num>/filename.mp4
         session_id = None

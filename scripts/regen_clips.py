@@ -22,6 +22,19 @@ SERVES_CSV = "data/metadata/serves.csv"
 def regenerate_serves(csv_path):
     with open(csv_path, newline="") as f:
         reader = csv.DictReader(f)
+        
+        # Check if required columns exist (check fieldnames before iterating)
+        if not reader.fieldnames:
+            print(f"Error: CSV file {csv_path} appears to be empty or malformed")
+            return
+        
+        required_cols = ["player", "serve_id", "source_video", "output_clip", "start_frame", "end_frame"]
+        missing_cols = [col for col in required_cols if col not in reader.fieldnames]
+        if missing_cols:
+            print(f"Error: CSV file {csv_path} is missing required columns: {', '.join(missing_cols)}")
+            print(f"Found columns: {', '.join(reader.fieldnames)}")
+            return
+        
         for row in reader:
             player = row["player"]
             serve_id = row["serve_id"]
@@ -81,7 +94,7 @@ Examples:
   # Regenerate clips from data/metadata/serves.csv
   python scripts/regen_clips.py
 
-  # Regenerate clips from user/user_serves.csv
+  # Regenerate clips from user/data/user_serves.csv
   python scripts/regen_clips.py --user-mode
         """
     )

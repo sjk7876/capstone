@@ -14,14 +14,249 @@ import re
 from scipy.signal import savgol_filter, find_peaks
 from common_args import add_player_session_serve_args, build_trajectory_paths, format_serve_number
 
+import numpy as np
+from scipy.signal import savgol_filter, find_peaks
+
+# Hit estimation constants
+MIN_HIT_FRAME = 20  # Hit frame will not be in the first N frames
+MIN_TRACK_LENGTH_FALLBACK = 5  # Minimum track length for fallback logic
+SIZE_THRESHOLD_MULTIPLIER = 0.9  # Multiplier for max size to define "near server" region
+MIN_REGION_SIZE = 3  # Minimum size for valid region
+SHRINK_DETECTION_WINDOW = 15  # Number of consecutive frames to check for shrink
+MIN_SIZE_DROP = 0.5  # Minimum total size drop to consider a hit
+
+# Landing estimation constants
+ROLLING_WINDOW_MIN = 3  # Minimum rolling window size for size smoothing
+LANDING_SEARCH_OFFSET = 10  # Frames after hit to start searching for landing
+PEAK_PROMINENCE = 0.05  # Prominence threshold for peak detection
+PEAK_MATCH_TOLERANCE = 3  # Frame tolerance for matching peaks to landing estimate
+REFINEMENT_WINDOW_LEFT = 3  # Frames to look left for landing refinement
+REFINEMENT_WINDOW_RIGHT = 4  # Frames to look right for landing refinement
+FALLBACK_LANDING_OFFSET = 1  # Frames to add to hit frame if no landing found
+Y_PEAK_PROMINENCE = 5.0  # tweak per your scale
+Y_PEAK_MIN_DISTANCE = 2  # min frames between y-peaks
+MAX_LANDING_WINDOW = 120  # don't search forever after hit
+
+# Signal processing constants
+SAVGOL_WINDOW_LENGTH = 9  # Savitzky-Golay filter window length
+SAVGOL_POLY_ORDER = 2  # Savitzky-Golay filter polynomial order
+MIN_TRACK_LENGTH = 3  # Minimum track length to process
+
+
+def _estimate_hit_from_toss_and_size(frames: np.array, y_s: np.array, size_s: np.array) -> tuple[int, int]:
+    """Estimate hit frame from toss pattern and ball size."""
+    n = len(frames)
+    
+    # Hit frame will not be in the first N frames - skip early frames
+    min_frame = MIN_HIT_FRAME
+    min_frame_idx = None
+    for i, f in enumerate(frames):
+        if f >= min_frame:
+            min_frame_idx = i
+            break
+    
+    if min_frame_idx is None:
+        # If clip is shorter than MIN_HIT_FRAME frames, use all frames
+        min_frame_idx = 0
+    
+    if n < MIN_TRACK_LENGTH_FALLBACK:
+        # dumb fallback - skip first 20 frames
+        search_size = size_s[min_frame_idx:]
+        if len(search_size) > 0:
+            hit_idx = int(np.argmin(search_size)) + min_frame_idx
+        else:
+            hit_idx = int(np.argmin(size_s))
+        return int(frames[hit_idx]), hit_idx
+
+    max_size = float(np.max(size_s))
+
+    # 1) "near server" region: ball still big (toss + hit)
+    size_thresh = SIZE_THRESHOLD_MULTIPLIER * max_size
+    near_mask = size_s >= size_thresh
+    
+    near_idxs = np.where(near_mask)[0]
+    if len(near_idxs) == 0:
+        # fallback if size threshold fails - skip first 20 frames
+        search_size = size_s[min_frame_idx:]
+        if len(search_size) > 0:
+            hit_idx = int(np.argmin(search_size)) + min_frame_idx
+        else:
+            hit_idx = int(np.argmin(size_s))
+        return int(frames[hit_idx]), hit_idx
+
+    start_idx = int(near_idxs[0])
+    end_idx   = int(near_idxs[-1])
+    
+    # Adjust start_idx to be at least min_frame_idx
+    start_idx = max(start_idx, min_frame_idx)
+
+    # also don't go too far into the clip (avoid landing)
+    end_idx = min(end_idx, int(0.7 * n))
+
+    if end_idx - start_idx < MIN_REGION_SIZE:
+        hit_idx = int(np.argmin(size_s[start_idx:end_idx+1]) + start_idx)
+        return int(frames[hit_idx]), hit_idx
+
+    # 2) toss apex = minimum y in this near region
+    local_apex_rel = int(np.argmin(y_s[start_idx:end_idx+1]))
+    apex_idx = start_idx + local_apex_rel
+
+    # 3) from apex forward, look for first "sustained shrink" in size
+    # Check if size decreases on average over k frames
+    k = SHRINK_DETECTION_WINDOW
+    hit_idx = None
+    for i in range(apex_idx, end_idx - k):
+        # Check average shrink over k frames
+        seq = size_s[i : i + k + 1]
+        avg_shrink = np.mean(np.diff(seq))
+        # also require a minimum total drop to avoid noise
+        if avg_shrink < 0 and seq[0] - seq[-1] > MIN_SIZE_DROP:
+            hit_idx = i
+            break
+
+    if hit_idx is None:
+        # fallback: choose where shrink becomes strongest after apex
+        dsize = np.gradient(size_s, frames)
+        region = dsize[apex_idx:end_idx+1]
+        local_idx = int(np.argmin(region))
+        hit_idx = apex_idx + local_idx
+
+    hit_frame = int(frames[hit_idx])
+    return hit_frame, hit_idx
+
+
+def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
+    n = len(frames)
+
+    # 1) choose a search segment after hit
+    start_frame = hit_frame + LANDING_SEARCH_OFFSET
+    end_frame   = min(frames[-1], hit_frame + MAX_LANDING_WINDOW)
+
+    search_mask = (frames >= start_frame) & (frames <= end_frame)
+    idxs = np.where(search_mask)[0]
+    if len(idxs) == 0:
+        # fallback: global min size after hit
+        after_hit = np.where(frames > hit_frame)[0]
+        if len(after_hit):
+            return int(frames[after_hit[np.argmin(size_s[after_hit])]])
+        return hit_frame + FALLBACK_LANDING_OFFSET
+
+    # 2) find first strong *maximum* in y (ball hits floor, y locally largest)
+    y_seg = y_s[idxs]
+    peaks, props = find_peaks(
+        y_seg,
+        prominence=Y_PEAK_PROMINENCE,
+        distance=Y_PEAK_MIN_DISTANCE
+    )
+
+    landing_idx = None
+    if len(peaks):
+        # pick earliest peak that actually looks like a bounce:
+        # y before increasing, y after not strictly increasing
+        for p in peaks:
+            g_idx = idxs[p]
+            if g_idx == 0 or g_idx >= n - 1:
+                continue
+            # require "coming down" before
+            if y_s[g_idx] <= y_s[g_idx-1]:
+                continue
+            # and "not still screaming down" after
+            if y_s[g_idx+1] >= y_s[g_idx]:
+                continue
+            landing_idx = g_idx
+            break
+
+    # 3) if y-peak failed, fall back to old rolling-size logic (but only as backup)
+    if landing_idx is None:
+        roll_win = max(ROLLING_WINDOW_MIN,
+                       len(size_s) // 2 * 2 + 1 if len(size_s) < ROLLING_WINDOW_MIN else ROLLING_WINDOW_MIN)
+        rolling = np.convolve(size_s, np.ones(roll_win) / roll_win, mode="valid")
+        offset = roll_win // 2
+        roll_frames = frames[offset : offset + len(rolling)]
+
+        mask2 = roll_frames > hit_frame + LANDING_SEARCH_OFFSET
+        if np.any(mask2):
+            landing_idx_local = np.argmin(rolling[mask2])
+            coarse = int(roll_frames[mask2][landing_idx_local])
+
+            # refine on *y* and *size* in a tiny window around coarse
+            cand = np.where((frames >= coarse - 2) & (frames <= coarse + 2))[0]
+            if len(cand):
+                # prefer largest y (closest to floor); if tie, smallest size
+                best = max(cand, key=lambda i: (y_s[i], -size_s[i]))
+                landing_idx = best
+            else:
+                landing_idx = np.argmin(size_s)  # absolute fallback
+        else:
+            landing_idx = np.argmin(size_s)
+
+    landing_frame = int(frames[landing_idx])
+
+    # 4) sanity: enforce landing after hit
+    if landing_frame <= hit_frame:
+        after_hit = np.where(frames > hit_frame)[0]
+        if len(after_hit):
+            landing_frame = int(frames[after_hit[np.argmin(size_s[after_hit])]])
+        else:
+            landing_frame = hit_frame + FALLBACK_LANDING_OFFSET
+
+    return landing_frame
+
+# def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
+#     """Estimate landing frame from ball size and motion patterns."""
+#     roll_win = ROLLING_WINDOW_MIN
+#     if len(size_s) < roll_win:
+#         roll_win = max(ROLLING_WINDOW_MIN, len(size_s) // 2 * 2 + 1)  # odd window, at least ROLLING_WINDOW_MIN
+
+#     rolling = np.convolve(size_s, np.ones(roll_win) / roll_win, mode="valid")
+#     offset = roll_win // 2
+#     roll_frames = frames[offset : offset + len(rolling)]
+
+#     # only look sufficiently after hit so we don't pick contact/toss
+#     mask = roll_frames > hit_frame + LANDING_SEARCH_OFFSET
+#     if np.any(mask):
+#         landing_idx_local = np.argmin(rolling[mask])
+#         landing_frame = int(roll_frames[mask][landing_idx_local])
+#     else:
+#         # fallback: global min of smoothed size
+#         landing_frame = int(frames[np.argmin(size_s)])
+
+#     # fine-tune landing: local inflection near min(size)
+#     mins, _ = find_peaks(-size_s, prominence=PEAK_PROMINENCE)
+#     nearest = None
+#     for idx in mins:
+#         if abs(frames[idx] - landing_frame) <= PEAK_MATCH_TOLERANCE:
+#             nearest = idx
+#             break
+
+#     if nearest is not None:
+#         left, right = max(0, nearest - REFINEMENT_WINDOW_LEFT), min(len(frames), nearest + REFINEMENT_WINDOW_RIGHT)
+#         local_range = np.arange(left, right)
+#         if len(local_range) > 0:
+#             land_refine = local_range[np.argmax(np.abs(np.gradient(dy[local_range])))]
+#             landing_frame = int(frames[land_refine])
+
+#     # sanity: enforce landing after hit
+#     if landing_frame <= hit_frame:
+#         after_hit = np.where(frames > hit_frame)[0]
+#         if len(after_hit):
+#             landing_frame = int(frames[after_hit[np.argmin(size_s[after_hit])]])
+#         else:
+#             landing_frame = hit_frame + FALLBACK_LANDING_OFFSET
+
+#     return landing_frame
+
+
 def estimate_hit_and_landing(track):
-    if not track or len(track) < 3:
+    if not track or len(track) < MIN_TRACK_LENGTH:
         return None, None
     
+    # ----------------- unpack -----------------
     frames = np.array([p["frame"] for p in track], dtype=int)
-    ys = np.array([p["center"][1] for p in track], dtype=float)
+    xs     = np.array([p["center"][0] for p in track], dtype=float)
+    ys     = np.array([p["center"][1] for p in track], dtype=float)
 
-    # --- handle size safely ---
+    # handle size safely
     sizes = []
     for p in track:
         if "size" in p and len(p["size"]) >= 2:
@@ -33,68 +268,25 @@ def estimate_hit_and_landing(track):
     hs = np.array([s[1] for s in sizes], dtype=float)
     size = np.sqrt(ws * hs)
 
-    # --- smoothing ---
-    # should always be 9
-    window_length = min(9, len(track) if len(track) % 2 == 1 else len(track) - 1)
-    if window_length < 3:
-        window_length = 3
+    # ----------------- smoothing -----------------
+    window_length = min(SAVGOL_WINDOW_LENGTH, len(track) if len(track) % 2 == 1 else len(track) - 1)
+    if window_length < MIN_REGION_SIZE:
+        window_length = MIN_REGION_SIZE
 
-    size_s = savgol_filter(size, window_length, min(2, window_length - 1), mode='interp')
-    y_s = savgol_filter(ys, window_length, min(2, window_length - 1), mode='interp')
+    x_s    = savgol_filter(xs,   window_length, min(SAVGOL_POLY_ORDER, window_length - 1), mode='interp')
+    y_s    = savgol_filter(ys,   window_length, min(SAVGOL_POLY_ORDER, window_length - 1), mode='interp')
+    size_s = savgol_filter(size, window_length, min(SAVGOL_POLY_ORDER, window_length - 1), mode='interp')
 
-    dy = np.gradient(y_s, frames)
-    ddy = np.gradient(dy)
+    dy = np.gradient(y_s, frames)   # keep for landing refinement
 
-    # --- hit: strongest downward motion ---
-    hit_idx = np.argmax(dy)
-    left, right = max(0, hit_idx - 3), min(len(frames), hit_idx + 4)
-    local_range = np.arange(left, right)
-    if len(local_range) > 0:
-        hit_refine = local_range[np.argmax(np.abs(ddy[local_range]))]
-        hit_idx = hit_refine
-    hit_frame = int(frames[hit_idx])
+    # ----------------- hit from toss pattern + size -----------------
+    hit_frame, hit_idx = _estimate_hit_from_toss_and_size(frames, y_s, size_s)
 
-    # --- landing: lowest rolling-average size after hit ---
-    roll_win = 5
-    if len(size_s) < roll_win:
-        roll_win = max(3, len(size_s) // 2 * 2 + 1)
-    rolling = np.convolve(size_s, np.ones(roll_win) / roll_win, mode="valid")
-    offset = roll_win // 2
-    roll_frames = frames[offset : offset + len(rolling)]
+    # ----------------- landing estimate -----------------
+    landing_frame = _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame)
 
-    mask = roll_frames > hit_frame + 20
-    if np.any(mask):
-        landing_idx = np.argmin(rolling[mask])
-        landing_frame = int(roll_frames[mask][landing_idx])
-    else:
-        landing_frame = int(frames[np.argmin(size_s)])
-
-    # fine-tune landing: local inflection near min(size)
-    mins, _ = find_peaks(-size_s, prominence=0.05)
-    nearest = None
-    for idx in mins:
-        if abs(frames[idx] - landing_frame) <= 3:
-            nearest = idx
-            break
-    if nearest is not None:
-        left, right = max(0, nearest - 3), min(len(frames), nearest + 4)
-        local_range = np.arange(left, right)
-        if len(local_range) > 0:
-            land_refine = local_range[np.argmax(np.abs(np.gradient(dy[local_range])))]
-            landing_frame = int(frames[land_refine])
-
-    # --- sanity check: enforce landing after hit ---
-    if landing_frame <= hit_frame:
-        # fallback: pick the first frame > hit_frame with min(size)
-        after_hit = np.where(frames > hit_frame)[0]
-        if len(after_hit):
-            landing_frame = int(frames[after_hit[np.argmin(size_s[after_hit])]])
-        else:
-            landing_frame = hit_frame + 5  # minimal fallback
-
-    # --- skip if ball never rebounds (no landing in clip) ---
+    # skip if ball never rebounds (no landing in clip)
     if np.all(np.diff(size_s) < 0) or np.all(np.diff(y_s) < 0):
-        # no rebound or track ends while still shrinking
         return hit_frame, None
 
     return hit_frame, landing_frame
