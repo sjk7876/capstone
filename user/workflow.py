@@ -50,9 +50,10 @@ def find_unprocessed_videos():
     video_extensions = {".mp4", ".avi", ".mov", ".mkv", ".m4v"}
     for video_file in input_dir.iterdir():
         if video_file.is_file() and video_file.suffix.lower() in video_extensions:
-            # Normalize path for comparison
+            # Normalize path for comparison with processed set
             video_path = str(video_file)
-            if video_path not in processed:
+            video_path_normalized = normalize_path(video_path)
+            if video_path_normalized not in processed:
                 unprocessed.append(video_path)
     
     return sorted(unprocessed)
@@ -97,12 +98,14 @@ def run_split_serves(video_path, player):
     print(f"{'='*60}")
     print(f"Player: {player}")
     print("\nInstructions:")
+    print("  Start the serve before the toss and end the serve after the ball lands.")
     print("  [s] = mark serve start")
     print("  [e] = mark serve end")
     print("  [d] = delete previous serve")
     print("  [f] = fast-forward")
     print("  [b] = back 30 frames")
     print("  [q] = quit")
+    print("  Note: Use [e] then [d] to delete any serves that hit the net - these should not be included in the dataset.")
     print("\nPress Enter to start splitting...")
     input()
     
