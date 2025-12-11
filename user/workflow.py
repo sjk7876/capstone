@@ -121,6 +121,31 @@ def run_split_serves(video_path, player):
     return result.returncode == 0
 
 
+def get_session_for_video(player, video_path):
+    """Get the session ID for a specific video from CSV."""
+    csv_path = get_user_serves_csv_path()
+    if not os.path.exists(csv_path):
+        return None
+    
+    # Normalize the video path for comparison
+    video_path_normalized = normalize_path(video_path)
+    
+    with open(csv_path, "r", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row.get("player") == player:
+                source_video = row.get("source_video", "").strip()
+                if source_video:
+                    source_video_normalized = normalize_path(source_video)
+                    if source_video_normalized == video_path_normalized:
+                        try:
+                            return int(row.get("session_id", 0))
+                        except (ValueError, TypeError):
+                            continue
+    
+    return None
+
+
 def get_latest_session(player):
     """Get the latest session number for a player from CSV."""
     csv_path = get_user_serves_csv_path()
@@ -282,12 +307,20 @@ Examples:
         else:
             print("\nSkipping split step (--skip-split)")
         
-        # Get session ID (should be the latest one for this player)
-        session_id = get_latest_session(player)
-        if session_id is None:
-            print(f"\nError: Could not determine session ID for player {player}")
-            print("Make sure serves were successfully split.")
-            continue
+        # Get session ID - if split was skipped, look up session for this video
+        # Otherwise, get the latest session (which should be the one just created)
+        if args.skip_split:
+            session_id = get_session_for_video(player, video_path)
+            if session_id is None:
+                print(f"\nError: Could not find session ID for video {os.path.basename(video_path)}")
+                print("Make sure this video was already split and exists in the CSV.")
+                continue
+        else:
+            session_id = get_latest_session(player)
+            if session_id is None:
+                print(f"\nError: Could not determine session ID for player {player}")
+                print("Make sure serves were successfully split.")
+                continue
         
         print(f"\nDetected session ID: {session_id}")
         
