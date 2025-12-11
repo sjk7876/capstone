@@ -220,12 +220,17 @@ def annotate_court(input_path, output_path, is_image=False):
             if total_frames > 1:
                 random_frame = random.randint(0, total_frames - 1)
                 if load_frame(random_frame):
-                    # Clear points when changing frame
-                    points = []
-                    current_point = 0
+                    # Retain points when changing frame
                     display_frame = draw_frame_with_points()
-                    cv2.putText(display_frame, f"Click {point_names[0]} (1/6)", (10, 30), 
-                               cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                    
+                    # Show current instruction based on points collected
+                    if current_point < 6:
+                        cv2.putText(display_frame, f"Click {point_names[current_point]} ({current_point+1}/6)", (10, 30), 
+                                   cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                    else:
+                        cv2.putText(display_frame, "All points collected! Press 's' to save, 'r' to reset", 
+                                   (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+                    
                     cv2.putText(display_frame, "Press 'r' to reset, 'n'/'p' for next/prev frame, 'i' for random frame, 'q' to quit", (10, 70), 
                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
                     cv2.imshow("Court Annotation", display_frame)
