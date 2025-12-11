@@ -176,8 +176,8 @@ def pick_served_ball(merged_tracks):
 
 def build_sort_paths(player, session, serve):
     serve_str = format_serve_number(serve)
-    detect_json = f"data/annotations/ball_detections/{player}/session_{session}/serve_{serve_str}.json"
-    output_json = f"data/trajectories/{player}/session_{session}/serve_{serve_str}.json"
+    detect_json = os.path.join("data", "annotations", "ball_detections", player, f"session_{session}", f"serve_{serve_str}.json")
+    output_json = os.path.join("data", "trajectories", player, f"session_{session}", f"serve_{serve_str}.json")
     return detect_json, output_json
 
 
@@ -262,7 +262,7 @@ def run_sort_from_json(detect_json, output_json, conf_thresh=0.3, debug=True, vi
     viz_paths = {}
     if visualize and player and session is not None and serve:
         serve_str = format_serve_number(serve)
-        viz_dir = f"data/visualizations/sort/{player}/session_{session}/"
+        viz_dir = os.path.join("data", "visualizations", "sort", player, f"session_{session}")
         viz_paths = {
             "before": os.path.join(viz_dir, f"serve_{serve_str}_before_merge.png"),
             "after": os.path.join(viz_dir, f"serve_{serve_str}_after_merge.png"),

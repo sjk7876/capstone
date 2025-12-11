@@ -6,6 +6,31 @@ across multiple scripts in the project.
 """
 import argparse
 import os
+from pathlib import Path
+
+
+def normalize_path(path: str) -> str:
+    """
+    Normalize a file path for cross-platform compatibility.
+    
+    Converts Windows backslashes to forward slashes and normalizes the path.
+    This ensures paths stored in CSV/JSON files work on both Windows and Linux.
+    
+    Works both ways: paths created on Windows (with backslashes) or Linux (with 
+    forward slashes) are normalized to forward slashes, which Python's os.path
+    functions handle correctly on both platforms.
+    
+    Args:
+        path: File path (may contain backslashes or forward slashes)
+    
+    Returns:
+        Normalized path with forward slashes
+    """
+    if not path:
+        return path
+    # Path() normalizes (removes redundant separators, resolves . and ..)
+    # as_posix() converts to forward slashes for cross-platform storage
+    return Path(path).as_posix()
 
 
 def format_serve_number(serve: str) -> str:
@@ -19,8 +44,8 @@ def build_trajectory_paths(player: str, session: int, serve: str) -> tuple[str, 
     """Build video and trajectory JSON paths from player/session/serve."""
     serve_str = format_serve_number(serve)
     
-    video_path = f"data/videos/processed/{player}/session_{session}/serve_{serve_str}.mp4"
-    json_path = f"data/trajectories/{player}/session_{session}/serve_{serve_str}.json"
+    video_path = os.path.join("data", "videos", "processed", player, f"session_{session}", f"serve_{serve_str}.mp4")
+    json_path = os.path.join("data", "trajectories", player, f"session_{session}", f"serve_{serve_str}.json")
     
     return video_path, json_path
 
@@ -109,9 +134,9 @@ def build_user_paths(player: str, session: int, serve: str) -> tuple[str, str, s
     """
     serve_str = format_serve_number(serve)
     
-    video_path = f"user/data/videos/{player}/session_{session}/serve_{serve_str}.mp4"
-    detect_json = f"user/data/detections/{player}/session_{session}/serve_{serve_str}.json"
-    traj_json = f"user/data/trajectories/{player}/session_{session}/serve_{serve_str}.json"
+    video_path = os.path.join("user", "data", "videos", player, f"session_{session}", f"serve_{serve_str}.mp4")
+    detect_json = os.path.join("user", "data", "detections", player, f"session_{session}", f"serve_{serve_str}.json")
+    traj_json = os.path.join("user", "data", "trajectories", player, f"session_{session}", f"serve_{serve_str}.json")
     
     return video_path, detect_json, traj_json
 

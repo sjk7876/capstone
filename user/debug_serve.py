@@ -158,7 +158,7 @@ def create_trajectory_video(video_path, trajectory, output_path, hit_frame=None,
 
 def find_trajectory_files(player, session_id):
     """Find all trajectory JSON files in a session directory."""
-    traj_dir = f"user/data/trajectories/{player}/session_{session_id}"
+    traj_dir = os.path.join("user", "data", "trajectories", player, f"session_{session_id}")
     if not os.path.exists(traj_dir):
         return []
     

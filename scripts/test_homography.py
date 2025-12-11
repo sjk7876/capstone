@@ -9,11 +9,11 @@ import json
 import argparse
 import cv2
 import numpy as np
-from common_args import add_player_session_serve_args
+from common_args import add_player_session_serve_args, normalize_path
 
 def load_corners(session_id):
     """Load court corner annotations for a session."""
-    path = f"data/annotations/court_corners/{session_id}.json"
+    path = os.path.join("data", "annotations", "court_corners", f"{session_id}.json")
     if not os.path.exists(path):
         raise FileNotFoundError(f"Corner file not found: {path}")
     with open(path) as f:
@@ -21,7 +21,7 @@ def load_corners(session_id):
 
 def load_homography(session_id):
     """Load homography matrix for a session."""
-    path = f"data/calibration/homographies/{session_id}.json"
+    path = os.path.join("data", "calibration", "homographies", f"{session_id}.json")
     if not os.path.exists(path):
         raise FileNotFoundError(f"Homography file not found: {path}")
     with open(path) as f:
@@ -42,6 +42,8 @@ def test_homography(session_id, show=False, save_path=None):
     img_path = ann.get("video_file")
     if not img_path:
         raise ValueError(f"No video_file in annotation for {session_id}")
+    # Normalize path in case it was stored with Windows backslashes
+    img_path = normalize_path(img_path)
     
     cap = cv2.VideoCapture(img_path)
     if not cap.isOpened():
@@ -116,7 +118,7 @@ def main():
     
     # Auto-generate save path if not provided
     if args.output is None:
-        save_path = f"data/visualizations/homography/{session_id}.png"
+        save_path = os.path.join("data", "visualizations", "homography", f"{session_id}.png")
     else:
         save_path = args.output
     

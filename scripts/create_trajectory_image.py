@@ -17,32 +17,33 @@ from matplotlib.colors import hsv_to_rgb
 script_dir = os.path.dirname(__file__)
 sys.path.insert(0, script_dir)
 
-from common_args import add_player_session_serve_args, add_user_mode_arg, build_user_paths, build_trajectory_paths, get_user_serves_csv_path, format_serve_number
+from common_args import add_player_session_serve_args, add_user_mode_arg, build_user_paths, build_trajectory_paths, get_user_serves_csv_path, format_serve_number, normalize_path
 
 
 def load_corners(session_id, user_mode=False):
     """Load court corner annotations for a session."""
     if user_mode:
         # Try CSV first
-        csv_path = "user/data/court_corners.csv"
+        csv_path = os.path.join("user", "data", "court_corners.csv")
         if os.path.exists(csv_path):
             import csv
             with open(csv_path, "r", newline="") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     if row["session_id"] == f"session_{session_id}":
-                        corners_path = row["court_corners_path"]
+                        # Normalize path in case it was stored with Windows backslashes
+                        corners_path = normalize_path(row["court_corners_path"])
                         if os.path.exists(corners_path):
                             with open(corners_path) as f2:
                                 return json.load(f2)
         
         # Fallback to direct path
-        user_path = f"user/data/annotations/court_corners/session_{session_id}.json"
+        user_path = os.path.join("user", "data", "annotations", "court_corners", f"session_{session_id}.json")
         if os.path.exists(user_path):
             with open(user_path) as f:
                 return json.load(f)
     else:
-        data_path = f"data/annotations/court_corners/{session_id}.json"
+        data_path = os.path.join("data", "annotations", "court_corners", f"{session_id}.json")
         if os.path.exists(data_path):
             with open(data_path) as f:
                 return json.load(f)
@@ -93,12 +94,15 @@ def create_trajectory_image(trajectories, player, session_id, output_path, user_
     if corners_data:
         # Get video path from corners annotation
         video_path = corners_data.get("video_file") or corners_data.get("image_file")
+        if video_path:
+            # Normalize path in case it was stored with Windows backslashes
+            video_path = normalize_path(video_path)
         if not video_path or not os.path.exists(video_path):
             # Try to find a serve video from the session
             if user_mode:
-                serve_video_dir = Path(f"user/data/videos/{player}/session_{session_id}")
+                serve_video_dir = Path(os.path.join("user", "data", "videos", player, f"session_{session_id}"))
             else:
-                serve_video_dir = Path(f"data/videos/processed/{player}/session_{session_id}")
+                serve_video_dir = Path(os.path.join("data", "videos", "processed", player, f"session_{session_id}"))
             serve_videos = list(serve_video_dir.glob("serve_*.mp4"))
             if serve_videos:
                 video_path = str(serve_videos[0])
@@ -184,6 +188,11 @@ def load_serves_from_csv(player, session_id, user_mode=False):
         reader = csv.DictReader(f)
         for row in reader:
             if row.get("player") == player and int(row.get("session_id", -1)) == session_id:
+                # Normalize paths in case they were stored with Windows backslashes
+                if "output_clip" in row:
+                    row["output_clip"] = normalize_path(row["output_clip"])
+                if "source_video" in row:
+                    row["source_video"] = normalize_path(row["source_video"])
                 serves.append(row)
     return serves
 

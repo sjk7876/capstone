@@ -10,8 +10,8 @@ from common_args import add_player_session_serve_args, format_serve_number, vali
 
 def build_detection_paths(player, session, serve):
     serve_str = format_serve_number(serve)
-    video_path = f"data/videos/processed/{player}/session_{session}/serve_{serve_str}.mp4"
-    json_path = f"data/annotations/ball_detections/{player}/session_{session}/serve_{serve_str}.json"
+    video_path = os.path.join("data", "videos", "processed", player, f"session_{session}", f"serve_{serve_str}.mp4")
+    json_path = os.path.join("data", "annotations", "ball_detections", player, f"session_{session}", f"serve_{serve_str}.json")
     return video_path, json_path
 
 

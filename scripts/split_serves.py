@@ -13,7 +13,7 @@ import re
 import time
 import csv
 from collections import deque
-from common_args import add_user_mode_arg, add_player_session_serve_args, get_user_serves_csv_path, get_user_videos_dir
+from common_args import add_user_mode_arg, add_player_session_serve_args, get_user_serves_csv_path, get_user_videos_dir, normalize_path
 
 SERVES_CSV = os.path.join("data", "metadata", "serves.csv")
 
@@ -80,9 +80,12 @@ def _delete_last_clip(output_dir, player, video_path, session_id, user_mode=Fals
             if len(row) < 5:
                 continue
             # Check: player, session_id, and source_video match
+            # Normalize paths for comparison
+            row_video_path = normalize_path(row[3]) if len(row) > 3 else ""
+            video_path_norm = normalize_path(video_path)
             if (row[0] == player and 
                 row[2] == str(session_id) and 
-                row[3] == video_path):
+                row_video_path == video_path_norm):
                 try:
                     serve_id = int(row[1])
                     if serve_id > last_id:
@@ -97,6 +100,8 @@ def _delete_last_clip(output_dir, player, video_path, session_id, user_mode=Fals
     
     # Delete the file
     out_file = last_serve[4]  # output_clip column
+    # Normalize path in case it was stored with Windows backslashes
+    out_file = normalize_path(out_file)
     if os.path.exists(out_file):
         os.remove(out_file)
         _remove_from_csv(player, last_id, out_file, user_mode)
@@ -117,10 +122,13 @@ def _append_to_csv(player, serve_id, video_path, out_file, start_frame, end_fram
                 writer.writerow(["player","serve_id","session_id","source_video","output_clip","start_frame","end_frame","landing_frame","hit_frame","landing_x","landing_y"])
             else:
                 writer.writerow(["player","serve_id","session_id","source_video","output_clip","start_frame","end_frame","landing_frame"])
+        # Normalize paths for cross-platform compatibility
+        video_path_norm = normalize_path(video_path)
+        out_file_norm = normalize_path(out_file)
         if user_mode:
-            writer.writerow([player, f"{serve_id:03d}", session_id, video_path, out_file, str(start_frame), str(end_frame), "", "", "", ""])
+            writer.writerow([player, f"{serve_id:03d}", session_id, video_path_norm, out_file_norm, str(start_frame), str(end_frame), "", "", "", ""])
         else:
-            writer.writerow([player, f"{serve_id:03d}", session_id, video_path, out_file, str(start_frame), str(end_frame), ""])
+            writer.writerow([player, f"{serve_id:03d}", session_id, video_path_norm, out_file_norm, str(start_frame), str(end_frame), ""])
 
 def _remove_from_csv(player, serve_id, out_file, user_mode=False):
     csv_path = get_user_serves_csv_path() if user_mode else SERVES_CSV

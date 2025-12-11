@@ -57,7 +57,7 @@ def extract_frames_for_serve(player, session, serve):
     print(f"Extracting frames for {player} session {session} serve {serve}...")
     
     # Construct video path
-    video_path = f"data/videos/processed/{player}/session_{session}/serve_{serve:03d}.mp4"
+    video_path = os.path.join("data", "videos", "processed", player, f"session_{session}", f"serve_{serve:03d}.mp4")
     
     if not os.path.exists(video_path):
         print(f"Warning: Video file not found: {video_path}")

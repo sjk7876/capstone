@@ -184,7 +184,7 @@ def extract_serve_id_from_path(json_path):
 
 def find_trajectory_files(player, session):
     """Find all trajectory JSON files in a session directory."""
-    traj_dir = f"data/trajectories/{player}/session_{session}"
+    traj_dir = os.path.join("data", "trajectories", player, f"session_{session}")
     if not os.path.exists(traj_dir):
         return []
     
@@ -316,7 +316,7 @@ def process_trajectory(json_path, player, session, serves_csv):
     
     # Save visualization plot
     serve_str = format_serve_number(serve_id)
-    plot_path = f"data/visualizations/landing_analysis/{player}/session_{session}/serve_{serve_str}.png"
+    plot_path = os.path.join("data", "visualizations", "landing_analysis", player, f"session_{session}", f"serve_{serve_str}.png")
     plot_trajectory_signals(track, hit, land, actual_landing, plot_path)
 
 

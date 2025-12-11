@@ -65,7 +65,7 @@ def extract_all_frames(video_path, output_dir=None, every_n=1):
 
 def find_serves_in_session(player, session):
     """Find all serve videos in a session directory."""
-    session_dir = f"data/videos/processed/{player}/session_{session}"
+    session_dir = os.path.join("data", "videos", "processed", player, f"session_{session}")
     if not os.path.exists(session_dir):
         return []
     
@@ -94,7 +94,7 @@ def main():
     if args.serve:
         # Single serve
         serve_str = format_serve_number(args.serve)
-        video_path = f"data/videos/processed/{args.player}/session_{args.session}/serve_{serve_str}.mp4"
+        video_path = os.path.join("data", "videos", "processed", args.player, f"session_{args.session}", f"serve_{serve_str}.mp4")
         video_paths = [video_path]
     else:
         # All serves in session
@@ -123,7 +123,7 @@ def main():
                 player = video_parts[processed_idx + 1]
                 session = video_parts[processed_idx + 2]  # session_1
                 serve = video_parts[processed_idx + 3].replace(".mp4", "")  # serve_001
-                output_dir = f"data/frames/{player}_{session}_{serve}"
+                output_dir = os.path.join("data", "frames", f"{player}_{session}_{serve}")
             else:
                 print(f"Error: Could not parse video path for auto-output: {video_path}")
                 continue

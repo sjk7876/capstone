@@ -16,7 +16,7 @@ from pathlib import Path
 script_dir = os.path.dirname(__file__)
 sys.path.insert(0, script_dir)
 
-from common_args import add_player_session_serve_args, add_user_mode_arg, get_user_serves_csv_path
+from common_args import add_player_session_serve_args, add_user_mode_arg, get_user_serves_csv_path, normalize_path
 from create_landing_image import load_corners, load_frame_from_video
 
 
@@ -222,11 +222,14 @@ def create_zone_visualization(coordinates, target_zone, player, session_id, outp
         warped = np.ones((Hm, W, 3), dtype=np.uint8) * 255
     else:
         video_path = corners_data.get("video_file") or corners_data.get("image_file")
+        if video_path:
+            # Normalize path in case it was stored with Windows backslashes
+            video_path = normalize_path(video_path)
         if not video_path or not os.path.exists(video_path):
             if user_mode:
-                serve_video_dir = Path(f"user/data/videos/{player}/session_{session_id}")
+                serve_video_dir = Path(os.path.join("user", "data", "videos", player, f"session_{session_id}"))
             else:
-                serve_video_dir = Path(f"data/videos/processed/{player}/session_{session_id}")
+                serve_video_dir = Path(os.path.join("data", "videos", "processed", player, f"session_{session_id}"))
             serve_videos = list(serve_video_dir.glob("serve_*.mp4"))
             if serve_videos:
                 video_path = str(serve_videos[0])
@@ -488,9 +491,9 @@ Examples:
         if vis_player and vis_session is not None:
             # Determine output path
             if args.user_mode:
-                output_dir = f"user/visualizations/session_{vis_session}"
+                output_dir = os.path.join("user", "visualizations", f"session_{vis_session}")
             else:
-                output_dir = f"data/visualizations/{vis_player}/session_{vis_session}"
+                output_dir = os.path.join("data", "visualizations", vis_player, f"session_{vis_session}")
             
             os.makedirs(output_dir, exist_ok=True)
             output_path = os.path.join(output_dir, f"zone_{args.target_zone}_analysis.png")

@@ -15,7 +15,7 @@ import sys
 script_dir = os.path.dirname(__file__)
 sys.path.insert(0, script_dir)
 
-from common_args import add_user_mode_arg, get_user_serves_csv_path
+from common_args import add_user_mode_arg, get_user_serves_csv_path, normalize_path
 
 SERVES_CSV = "data/metadata/serves.csv"
 
@@ -38,8 +38,9 @@ def regenerate_serves(csv_path):
         for row in reader:
             player = row["player"]
             serve_id = row["serve_id"]
-            source_video = row["source_video"]
-            output_clip = row["output_clip"]
+            # Normalize paths in case they were stored with Windows backslashes
+            source_video = normalize_path(row["source_video"])
+            output_clip = normalize_path(row["output_clip"])
             start_frame = int(row["start_frame"])
             end_frame = int(row["end_frame"])
 

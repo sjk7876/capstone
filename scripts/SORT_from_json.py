@@ -172,8 +172,8 @@ def pick_served_ball(merged_tracks):
 
 def build_sort_paths(player, session, serve):
     serve_str = format_serve_number(serve)
-    detect_json = f"data/annotations/ball_detections/{player}/session_{session}/serve_{serve_str}.json"
-    output_json = f"data/trajectories/{player}/session_{session}/serve_{serve_str}.json"
+    detect_json = os.path.join("data", "annotations", "ball_detections", player, f"session_{session}", f"serve_{serve_str}.json")
+    output_json = os.path.join("data", "trajectories", player, f"session_{session}", f"serve_{serve_str}.json")
     return detect_json, output_json
 
 

@@ -7,6 +7,14 @@ Updates serves.csv with landing frame numbers.
 import cv2
 import csv
 import os
+import sys
+from pathlib import Path
+
+# Add scripts directory to path for imports
+script_dir = os.path.join(os.path.dirname(__file__))
+sys.path.insert(0, script_dir)
+
+from common_args import normalize_path
 
 SERVES_CSV = "data/metadata/serves.csv"
 
@@ -19,7 +27,10 @@ def update_csv(clip_path, landing_frame):
         if "landing_frame" not in fieldnames:
             fieldnames = fieldnames + ["landing_frame"]
         for row in reader:
-            if row.get("output_clip") == clip_path:
+            # Normalize paths for comparison
+            row_output_clip = normalize_path(row.get("output_clip", ""))
+            clip_path_norm = normalize_path(clip_path)
+            if row_output_clip == clip_path_norm:
                 row["landing_frame"] = str(landing_frame)
                 updated = True
             rows.append(row)
@@ -98,7 +109,8 @@ def label_clip(clip_path):
 def main():
     with open(SERVES_CSV, newline="") as f:
         reader = csv.DictReader(f)
-        clips = [(row["output_clip"], row.get("landing_frame", "") or "") for row in reader]
+        # Normalize paths when reading from CSV
+        clips = [(normalize_path(row["output_clip"]), row.get("landing_frame", "") or "") for row in reader]
 
     # stats before labeling
     total = len(clips)

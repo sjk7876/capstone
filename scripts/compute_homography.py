@@ -10,25 +10,26 @@ import csv
 import cv2
 import numpy as np
 import argparse
-from common_args import add_player_session_serve_args, add_user_mode_arg
+from common_args import add_player_session_serve_args, add_user_mode_arg, normalize_path
 
 def get_court_corners_path(session_id, user_mode=False):
     """Get court corners path from CSV or fallback to direct path."""
     if user_mode:
         # Try CSV first
-        csv_path = "user/data/court_corners.csv"
+        csv_path = os.path.join("user", "data", "court_corners.csv")
         if os.path.exists(csv_path):
             with open(csv_path, "r", newline="") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     if row["session_id"] == session_id:
-                        corners_path = row["court_corners_path"]
+                        # Normalize path in case it was stored with Windows backslashes
+                        corners_path = normalize_path(row["court_corners_path"])
                         if os.path.exists(corners_path):
                             return corners_path
         # Fallback to direct path
-        return f"user/data/annotations/court_corners/{session_id}.json"
+        return os.path.join("user", "data", "annotations", "court_corners", f"{session_id}.json")
     else:
-        return f"data/annotations/court_corners/{session_id}.json"
+        return os.path.join("data", "annotations", "court_corners", f"{session_id}.json")
 
 
 def compute_homography(session_id, user_mode=False):
@@ -71,11 +72,13 @@ def compute_homography(session_id, user_mode=False):
         return
 
     if user_mode:
-        os.makedirs("user/data/calibration/homographies", exist_ok=True)
-        out_path = f"user/data/calibration/homographies/{session_id}.json"
+        out_dir = os.path.join("user", "data", "calibration", "homographies")
+        os.makedirs(out_dir, exist_ok=True)
+        out_path = os.path.join(out_dir, f"{session_id}.json")
     else:
-        os.makedirs("data/calibration/homographies", exist_ok=True)
-        out_path = f"data/calibration/homographies/{session_id}.json"
+        out_dir = os.path.join("data", "calibration", "homographies")
+        os.makedirs(out_dir, exist_ok=True)
+        out_path = os.path.join(out_dir, f"{session_id}.json")
 
     out = {
         "session_id": session_id,

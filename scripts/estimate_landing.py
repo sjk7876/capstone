@@ -376,7 +376,7 @@ def extract_serve_id_from_path(json_path):
 
 def find_trajectory_files(player, session):
     """Find all trajectory JSON files in a session directory."""
-    traj_dir = f"data/trajectories/{player}/session_{session}"
+    traj_dir = os.path.join("data", "trajectories", player, f"session_{session}")
     if not os.path.exists(traj_dir):
         return []
     

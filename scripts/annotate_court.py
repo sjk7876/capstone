@@ -11,7 +11,7 @@ import argparse
 import csv
 import random
 from pathlib import Path
-from common_args import add_player_session_serve_args, add_user_mode_arg, build_trajectory_paths, build_user_paths, validate_video_exists, get_user_serves_csv_path
+from common_args import add_player_session_serve_args, add_user_mode_arg, build_trajectory_paths, build_user_paths, validate_video_exists, get_user_serves_csv_path, normalize_path
 
 def annotate_court(input_path, output_path, is_image=False):
     """Interactive court annotation tool for 6 points: 4 corners + 2 center line points."""
@@ -283,10 +283,11 @@ def annotate_court(input_path, output_path, is_image=False):
             "image_resolution": [width, height],
             "court_corners": points
         }
+        # Normalize paths for cross-platform compatibility
         if is_image:
-            annotation["image_file"] = str(input_path)
+            annotation["image_file"] = normalize_path(str(input_path))
         else:
-            annotation["video_file"] = str(input_path)
+            annotation["video_file"] = normalize_path(str(input_path))
         
         # Ensure output directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -308,7 +309,7 @@ def annotate_court(input_path, output_path, is_image=False):
 
 def update_court_corners_csv(session_id, video_path, corners_path):
     """Update user/data/court_corners.csv with new annotation entry."""
-    csv_path = "user/data/court_corners.csv"
+    csv_path = os.path.join("user", "data", "court_corners.csv")
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     
     # Read existing rows
@@ -321,12 +322,16 @@ def update_court_corners_csv(session_id, video_path, corners_path):
             reader = csv.DictReader(f)
             rows = list(reader)
     
+    # Normalize paths for cross-platform compatibility
+    video_path_normalized = normalize_path(video_path)
+    corners_path_normalized = normalize_path(corners_path)
+    
     # Check if entry exists for this session
     updated = False
     for row in rows:
         if row["session_id"] == session_id:
-            row["video_path"] = video_path
-            row["court_corners_path"] = corners_path
+            row["video_path"] = video_path_normalized
+            row["court_corners_path"] = corners_path_normalized
             updated = True
             break
     
@@ -334,8 +339,8 @@ def update_court_corners_csv(session_id, video_path, corners_path):
     if not updated:
         rows.append({
             "session_id": session_id,
-            "video_path": video_path,
-            "court_corners_path": corners_path
+            "video_path": video_path_normalized,
+            "court_corners_path": corners_path_normalized
         })
     
     # Write back
@@ -348,7 +353,7 @@ def update_court_corners_csv(session_id, video_path, corners_path):
 
 def get_court_corners_from_csv(session_id):
     """Get court corners path from user/data/court_corners.csv for a given session."""
-    csv_path = "user/data/court_corners.csv"
+    csv_path = os.path.join("user", "data", "court_corners.csv")
     if not os.path.exists(csv_path):
         return None
     
@@ -356,7 +361,8 @@ def get_court_corners_from_csv(session_id):
         reader = csv.DictReader(f)
         for row in reader:
             if row["session_id"] == session_id:
-                return row["court_corners_path"]
+                # Normalize path in case it was stored with Windows backslashes
+                return normalize_path(row["court_corners_path"])
     return None
 
 
@@ -461,27 +467,27 @@ def main():
                 video_path, _, _ = build_user_paths(args.player, args.session, args.serve)
             else:
                 # Use first serve in session
-                session_dir = Path(f"user/data/videos/{args.player}/session_{args.session}")
+                session_dir = Path(os.path.join("user", "data", "videos", args.player, f"session_{args.session}"))
                 serve_clips = sorted(session_dir.glob("serve_*.mp4"))
                 if not serve_clips:
                     raise SystemExit(f"No serve videos found for {args.player}/session_{args.session}")
                 video_path = str(serve_clips[0])
             
             # Generate output path based on session
-            output_path = f"user/data/annotations/court_corners/session_{args.session}.json"
+            output_path = os.path.join("user", "data", "annotations", "court_corners", f"session_{args.session}.json")
         else:
             if args.serve:
                 video_path, _ = build_trajectory_paths(args.player, args.session, args.serve)
             else:
                 # Use first serve in session
-                session_dir = Path(f"data/videos/processed/{args.player}/session_{args.session}")
+                session_dir = Path(os.path.join("data", "videos", "processed", args.player, f"session_{args.session}"))
                 serve_clips = sorted(session_dir.glob("serve_*.mp4"))
                 if not serve_clips:
                     raise SystemExit(f"No serve videos found for {args.player}/session_{args.session}")
                 video_path = str(serve_clips[0])
             
             # Generate output path based on session
-            output_path = f"data/annotations/court_corners/session_{args.session}.json"
+            output_path = os.path.join("data", "annotations", "court_corners", f"session_{args.session}.json")
         
         validate_video_exists(video_path)
         

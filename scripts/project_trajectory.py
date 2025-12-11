@@ -8,7 +8,7 @@ import os, json, argparse, numpy as np, csv, re, glob
 from common_args import add_player_session_serve_args, build_trajectory_paths, format_serve_number
 
 def load_homography(session_id):
-    path = f"data/calibration/homographies/{session_id}.json"
+    path = os.path.join("data", "calibration", "homographies", f"{session_id}.json")
     if not os.path.exists(path):
         raise FileNotFoundError(f"Homography file not found: {path}")
     with open(path) as f:
@@ -89,7 +89,7 @@ def project_landing(player, session, serve):
     X_center, Y_center = warp_point(u, v, H)
     X, Y = warp_point(u, v_bottom, H)
 
-    out_dir = f"data/landings_world/{player}/session_{session}/"
+    out_dir = os.path.join("data", "landings_world", player, f"session_{session}")
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"serve_{format_serve_number(serve)}.json")
 
@@ -120,7 +120,7 @@ def main():
         project_landing(args.player, args.session, args.serve)
     else:
         # Project all serves in session
-        traj_dir = f"data/trajectories/{args.player}/session_{args.session}/"
+        traj_dir = os.path.join("data", "trajectories", args.player, f"session_{args.session}")
         if not os.path.exists(traj_dir):
             print(f"Trajectory directory not found: {traj_dir}")
             return

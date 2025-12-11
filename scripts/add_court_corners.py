@@ -15,7 +15,7 @@ from common_args import add_player_session_serve_args, format_serve_number
 
 def load_corners(session_id):
     """Load court corner annotations for a session."""
-    path = f"data/annotations/court_corners/{session_id}.json"
+    path = os.path.join("data", "annotations", "court_corners", f"{session_id}.json")
     if not os.path.exists(path):
         raise FileNotFoundError(f"Corner file not found: {path}")
     with open(path) as f:
@@ -23,7 +23,7 @@ def load_corners(session_id):
 
 def load_homography(session_id):
     """Load homography matrix for a session."""
-    path = f"data/calibration/homographies/{session_id}.json"
+    path = os.path.join("data", "calibration", "homographies", f"{session_id}.json")
     if not os.path.exists(path):
         raise FileNotFoundError(f"Homography file not found: {path}")
     with open(path) as f:
@@ -51,7 +51,7 @@ def find_image_in_datasets(player, session, serve, split="train", frame=None):
     
     # Try train first, then val
     for dataset_split in [split, "train", "val"]:
-        search_path = f"datasets/ball_yolo/images/{dataset_split}/{pattern}"
+        search_path = os.path.join("datasets", "ball_yolo", "images", dataset_split, pattern)
         matches = glob.glob(search_path)
         if matches:
             return matches[0], dataset_split
@@ -65,7 +65,7 @@ def find_label_in_datasets(img_path, split):
     
     img_name = os.path.basename(img_path)
     label_name = os.path.splitext(img_name)[0] + ".txt"
-    label_path = f"datasets/ball_yolo/labels/{split}/{label_name}"
+    label_path = os.path.join("datasets", "ball_yolo", "labels", split, label_name)
     
     if os.path.exists(label_path):
         return label_path
@@ -246,7 +246,7 @@ def add_court_corners_to_image(player, session, serve, output_path=None, split="
         img_name = os.path.basename(img_path)
         img_base, img_ext = os.path.splitext(img_name)
         # Save to data/visualizations/court_corners/{player}/session_{session}/
-        output_dir = f"data/visualizations/court_corners/{player}/session_{session}/"
+        output_dir = os.path.join("data", "visualizations", "court_corners", player, f"session_{session}")
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f"{img_base}_with_corners{img_ext}")
     

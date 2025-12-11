@@ -30,7 +30,7 @@ from detection_to_json import run_yolo_cli
 from SORT_from_json import run_sort_from_json
 from estimate_landing import estimate_hit_and_landing
 from compute_homography import compute_homography
-from common_args import add_player_session_serve_args, build_user_paths, get_user_serves_csv_path, format_serve_number
+from common_args import add_player_session_serve_args, build_user_paths, get_user_serves_csv_path, format_serve_number, normalize_path
 from create_landing_image import create_landing_image
 from create_trajectory_image import create_trajectory_image
 
@@ -56,21 +56,23 @@ def load_user_serves(session=None):
                         continue
                 except (ValueError, KeyError):
                     continue
+            # Normalize paths in case they were stored with Windows backslashes
+            if "output_clip" in row:
+                row["output_clip"] = normalize_path(row["output_clip"])
+            if "source_video" in row:
+                row["source_video"] = normalize_path(row["source_video"])
             serves.append(row)
     return serves
 
 
 def load_homography(session_id):
     """Load homography matrix, checking both user and data locations."""
-    user_path = f"user/data/calibration/homographies/session_{session_id}.json"
-    data_path = f"data/calibration/homographies/session_{session_id}.json"
-    
-    for path in [user_path, data_path]:
-        if os.path.exists(path):
-            with open(path) as f:
-                data = json.load(f)
-            return np.array(data["H"], dtype=np.float64)
-    
+    user_path = os.path.join("user", "data", "calibration", "homographies", f"session_{session_id}.json")
+
+    if os.path.exists(user_path):
+        with open(user_path) as f:
+            data = json.load(f)
+        return np.array(data["H"], dtype=np.float64)
     return None
 
 
@@ -257,20 +259,20 @@ def process_serve(serve_row, homography=None, force=False):
 def load_corners(session_id):
     """Load court corner annotations for a session from court_corners.csv or fallback to direct path."""
     # First try to load from CSV
-    csv_path = "user/data/court_corners.csv"
+    csv_path = os.path.join("user", "data", "court_corners.csv")
     if os.path.exists(csv_path):
         with open(csv_path, "r", newline="") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if row["session_id"] == f"session_{session_id}":
-                    corners_path = row["court_corners_path"]
+                    corners_path = normalize_path(row["court_corners_path"])
                     if os.path.exists(corners_path):
                         with open(corners_path) as f2:
                             return json.load(f2)
     
     # Fallback to direct path lookup
-    user_path = f"user/data/annotations/court_corners/session_{session_id}.json"
-    data_path = f"data/annotations/court_corners/{session_id}.json"
+    user_path = os.path.join("user", "data", "annotations", "court_corners", f"session_{session_id}.json")
+    data_path = os.path.join("data", "annotations", "court_corners", f"{session_id}.json")
     
     for path in [user_path, data_path]:
         if os.path.exists(path):
