@@ -160,7 +160,6 @@ def split_serves(video_path, output_dir, player, session_id, user_mode=False):
     duration = frame_count / fps
 
     print(f"Video length: {duration:.2f}s at {fps:.1f} fps")
-    print("Controls: [s] = start serve, [e] = end serve, [d] = delete previous, [f] = fast-forward, [b] = back 10 frames, [q] = quit")
 
     # Setup window for proper display
     cv2.namedWindow("split_serves", cv2.WINDOW_NORMAL)
@@ -355,6 +354,11 @@ Examples:
         output_dir = get_user_videos_dir()
     else:
         output_dir = os.path.join("data", "videos", "processed")
+    
+    # Print instructions when run directly from command line
+    print("Controls: [s] = start serve, [e] = end serve, [d] = delete previous, [f] = fast-forward, [b] = back 10 frames, [q] = quit")
+    print("Note: Use [e] then [d] to delete any serves that hit the net - these should not be included in the dataset.")
+    
     split_serves(args.video, output_dir, args.player, session_id, args.user_mode)
 
 if __name__ == "__main__":
