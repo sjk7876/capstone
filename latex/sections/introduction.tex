@@ -9,17 +9,17 @@ Despite its simple appearance, volleyball is defined by highly technical movemen
 The serve is the only action in volleyball that is completely under one player's control, making it one of the most critical components of the game. Each player on the court is guaranteed to serve at least once per set, and serves can directly score points if they land on the opponent's court. A strong serve can pressure the opponent's receive formation, while a weak or inconsistent one often results in free points for the opponent. Because every rally begins with a serve, it often dictates early momentum and sets the tone for subsequent plays. Small variations in toss height, contact angle, or approach can shift the landing zone by several meters. Because these differences occur over tens of milliseconds, athletes rely heavily on video to refine technique. Yet traditional video review provides only qualitative feedback such as “a little short” or “drifted wide,” offering no quantitative measure of accuracy or consistency across an entire practice session.
 
 \subsection{Motivation for Automated Analysis}
-Some commercial tools, such as BallTimeAI, attempt to automate volleyball analysis, but they are closed-source, subscription-based, and focused mainly on match statistics rather than detailed serve mechanics. Many also rely on specialized equipment or multi-camera setups, which limits accessibility for teams that record practices using a single baseline camera.
+Some commercial tools, such as BallTimeAI~\cite{balltime}, attempt to automate volleyball analysis, but they are closed-source, subscription-based, and focused mainly on match statistics rather than detailed serve mechanics. Many also rely on specialized equipment or multi-camera setups, which limits accessibility for teams that record practices using a single baseline camera.
 
 Computer vision provides a practical alternative. With accurate ball tracking and court calibration, a system can extract useful serve information such as trajectory shape, toss consistency, and landing accuracy from ordinary video. The main difficulty is that the ball is small, fast, and frequently blurred or occluded, which makes detection unreliable from a single viewpoint. Robust tracking must handle missing or noisy observations while still maintaining a stable trajectory estimate.
 
-To address this, the system uses a fine-tuned YOLOv8 detector. Training on full-resolution 1080p footage allows the model to handle blur, partial occlusion, and rapid motion, achieving a mAP50–95 of 0.911 with over 99\% precision and recall.
+To address this, the system uses a fine-tuned YOLOv8 detector~\cite{yolov8}. Training on full-resolution 1080p footage allows the model to handle blur, partial occlusion, and rapid motion, achieving a mAP50--95 of 0.911 with over 99\% precision and recall.
 
 \subsection{Project Scope and Objectives}
 This project develops a single-camera system that processes baseline volleyball footage and automatically extracts serve metrics. The final system delivers four core capabilities:
 \begin{itemize}
-    \item \textbf{Ball Detection and Tracking:} A fine-tuned YOLOv8 model integrated with SORT and smoothing to recover stable trajectories.
-    \item \textbf{Hit and Landing Estimation:} A size–motion heuristic that identifies the moment of contact and the landing frame, achieving accuracy within approximately $\pm 1$ frame.
+    \item \textbf{Ball Detection and Tracking:} A fine-tuned YOLOv8 model integrated with SORT~\cite{sort} and smoothing to recover stable trajectories.
+    \item \textbf{Hit and Landing Estimation:} A size--motion heuristic that identifies the moment of contact and the landing frame, achieving accuracy within approximately $\pm 1$ frame.
     \item \textbf{Court Calibration:} Homography computed from manually annotated court corners to convert pixel measurements into real-court coordinates.
     \item \textbf{Serve Accuracy and Consistency Analysis:} Landing-point visualizations, trajectory overlays, and zone-based summaries for players and sessions.
 \end{itemize}
