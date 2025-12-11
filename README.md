@@ -29,6 +29,8 @@
 
 ### Prerequisites
 
+**Platform Note:** Training, tuning, and annotating should ideally be done on Linux. Windows functionality is not guaranteed for these operations. The codebase has been designed with cross-platform compatibility for basic operations, but some advanced features may have platform-specific requirements.
+
 Install Python dependencies:
 ```bash
 pip install -r requirements.txt
@@ -327,6 +329,8 @@ This script:
 ---
 
 ## Training Workflow
+
+> **Platform Recommendation:** Training, tuning, and annotating operations should ideally be performed on Linux. Windows functionality is not guaranteed for these workflows.
 
 1. [Record Raw Session](#1-record-raw-sessions)
 2. [Split Into Serves](#2-split-into-serves)

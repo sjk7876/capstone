@@ -9,7 +9,7 @@ This folder contains user-facing tools for processing tennis serves.
 Use the master workflow script to process new videos automatically:
 
 ```bash
-python user/process_new_video.py
+python user/workflow.py
 ```
 
 This script will:

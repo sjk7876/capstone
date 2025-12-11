@@ -18,7 +18,7 @@ from pathlib import Path
 script_dir = os.path.join(os.path.dirname(__file__), "..", "scripts")
 sys.path.insert(0, script_dir)
 
-from common_args import get_user_serves_csv_path
+from common_args import get_user_serves_csv_path, normalize_path
 
 
 def get_processed_videos():
@@ -32,7 +32,7 @@ def get_processed_videos():
             for row in reader:
                 source_video = row.get("source_video", "").strip()
                 if source_video:
-                    processed.add(source_video)
+                    processed.add(normalize_path(source_video))
     
     return processed
 
@@ -315,7 +315,7 @@ Examples:
             print("\nSkipping zone analysis step (--skip-zones)")
         
         print(f"\n{'='*60}")
-        print(f"✓ Completed processing: {os.path.basename(video_path)}")
+        print(f"Completed processing: {os.path.basename(video_path)}")
         print(f"{'='*60}")
     
     print("\nAll videos processed!")
