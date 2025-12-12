@@ -69,7 +69,7 @@ def load_frame_from_video(video_path, frame_number=0):
 
 
 def create_trajectory_image(trajectories, player, session_id, output_path, user_mode=False, 
-                           landing_frames=None, labels=None, title=None):
+                           landing_frames=None, labels=None, title=None, video_path=None, frame_number=0):
     """
     Create trajectory overlay visualization from trajectories.
     
@@ -82,23 +82,29 @@ def create_trajectory_image(trajectories, player, session_id, output_path, user_
         landing_frames: Optional list of landing frame numbers (one per trajectory)
         labels: Optional list of labels for each trajectory (e.g., serve IDs)
         title: Optional title text for the image
+        video_path: Optional video path to load frame from (if None, will try to find one)
+        frame_number: Frame number to load from video (default: 0)
     """
     if not trajectories:
         print("[error] No trajectories provided")
         return False
     
-    # Load court corners to get video path
-    corners_data = load_corners(session_id, user_mode)
     frame = None
     
-    if corners_data:
-        # Get video path from corners annotation
-        video_path = corners_data.get("video_file") or corners_data.get("image_file")
-        if video_path:
-            # Normalize path in case it was stored with Windows backslashes
-            video_path = normalize_path(video_path)
+    # If video_path not provided, try to find one
+    if video_path is None:
+        # Load court corners to get video path
+        corners_data = load_corners(session_id, user_mode)
+        
+        if corners_data:
+            # Get video path from corners annotation
+            video_path = corners_data.get("video_file") or corners_data.get("image_file")
+            if video_path:
+                # Normalize path in case it was stored with Windows backslashes
+                video_path = normalize_path(video_path)
+        
+        # If still no video path, try to find a serve video from the session
         if not video_path or not os.path.exists(video_path):
-            # Try to find a serve video from the session
             if user_mode:
                 serve_video_dir = Path(os.path.join("user", "data", "videos", player, f"session_{session_id}"))
             else:
@@ -108,13 +114,16 @@ def create_trajectory_image(trajectories, player, session_id, output_path, user_
                 video_path = str(serve_videos[0])
             else:
                 video_path = None
-        
-        if video_path and os.path.exists(video_path):
-            # Load first frame from video
+    
+    # Load frame from video
+    if video_path and os.path.exists(video_path):
+        frame = load_frame_from_video(video_path, frame_number)
+        if frame is None:
+            print(f"[warning] Could not load frame {frame_number} from {video_path}, trying frame 0")
             frame = load_frame_from_video(video_path, 0)
     
     if frame is None:
-        print(f"[warning] Could not load court image for session {session_id}, using blank canvas")
+        print(f"[warning] Could not load video frame for session {session_id}, using blank canvas")
         # Create blank canvas with reasonable size (assuming typical video dimensions)
         frame = np.ones((1080, 1920, 3), dtype=np.uint8) * 255
     
@@ -197,8 +206,18 @@ def load_serves_from_csv(player, session_id, user_mode=False):
     return serves
 
 
-def load_trajectories_from_serves(player, session_id, user_mode=False):
-    """Load trajectories from JSON files for a player/session."""
+def load_trajectories_from_serves(player, session_id, user_mode=False, serve_id=None):
+    """Load trajectories from JSON files for a player/session.
+    
+    Args:
+        player: Player name
+        session_id: Session ID
+        user_mode: Whether to use user/ paths
+        serve_id: Optional serve ID to load only that specific trajectory
+    
+    Returns:
+        Tuple of (trajectories, landing_frames, labels)
+    """
     serves = load_serves_from_csv(player, session_id, user_mode)
     
     trajectories = []
@@ -206,15 +225,19 @@ def load_trajectories_from_serves(player, session_id, user_mode=False):
     labels = []
     
     for serve in serves:
-        serve_id = serve.get("serve_id", "")
-        if not serve_id:
+        current_serve_id = serve.get("serve_id", "")
+        if not current_serve_id:
+            continue
+        
+        # If serve_id is specified, only load that one
+        if serve_id is not None and current_serve_id != serve_id:
             continue
         
         # Build trajectory path
         if user_mode:
-            _, _, traj_json = build_user_paths(player, session_id, serve_id)
+            _, _, traj_json = build_user_paths(player, session_id, current_serve_id)
         else:
-            _, traj_json = build_trajectory_paths(player, session_id, serve_id)
+            _, traj_json = build_trajectory_paths(player, session_id, current_serve_id)
         
         if os.path.exists(traj_json):
             try:
@@ -231,7 +254,7 @@ def load_trajectories_from_serves(player, session_id, user_mode=False):
                             landing_frames.append(None)
                     else:
                         landing_frames.append(None)
-                    labels.append(f"#{serve_id}")
+                    labels.append(f"#{current_serve_id}")
             except (json.JSONDecodeError, IOError) as e:
                 print(f"[warning] Could not load trajectory from {traj_json}: {e}")
                 continue
@@ -265,6 +288,10 @@ Examples:
                        help="Optional labels for each trajectory (e.g., serve IDs). If not provided, uses serve IDs automatically.")
     parser.add_argument("--title", type=str,
                        help="Optional title text for the image")
+    parser.add_argument("--frame", "-f", type=int, default=0,
+                       help="Frame number to use as background from video (default: 0)")
+    parser.add_argument("--video", type=str, default=None,
+                       help="Optional video path to use as background (if not provided, will try to find one)")
     
     args = parser.parse_args()
     
@@ -273,16 +300,39 @@ Examples:
     
     player = args.player
     session_id = int(args.session)
+    serve_id = format_serve_number(args.serve) if args.serve else None
     
     # Load trajectories from JSON files
-    print(f"Loading trajectories for {player}/session_{session_id}...")
-    trajectories, auto_landing_frames, auto_labels = load_trajectories_from_serves(player, session_id, user_mode=args.user_mode)
+    if serve_id:
+        print(f"Loading trajectory for {player}/session_{session_id}/serve_{serve_id}...")
+    else:
+        print(f"Loading trajectories for {player}/session_{session_id}...")
+    
+    trajectories, auto_landing_frames, auto_labels = load_trajectories_from_serves(
+        player, session_id, user_mode=args.user_mode, serve_id=serve_id
+    )
     if not trajectories:
-        parser.error(f"No trajectory files found for {player}/session_{session_id}")
+        if serve_id:
+            parser.error(f"No trajectory file found for {player}/session_{session_id}/serve_{serve_id}")
+        else:
+            parser.error(f"No trajectory files found for {player}/session_{session_id}")
     
     landing_frames = args.landing_frames if args.landing_frames is not None else auto_landing_frames
     labels = args.labels if args.labels is not None else None
-    print(f"Found {len(trajectories)} trajectories")
+    print(f"Found {len(trajectories)} trajectory(ies)")
+    
+    # Get video path if serve is specified
+    video_path = args.video
+    if video_path:
+        video_path = normalize_path(video_path)
+    elif serve_id:
+        # Try to get video path for the specific serve
+        if args.user_mode:
+            video_path, _, _ = build_user_paths(player, session_id, serve_id)
+        else:
+            video_path, _ = build_trajectory_paths(player, session_id, serve_id)
+        if not os.path.exists(video_path):
+            video_path = None
     
     # Create image
     create_trajectory_image(
@@ -293,7 +343,9 @@ Examples:
         user_mode=args.user_mode,
         landing_frames=landing_frames,
         labels=labels,
-        title=args.title
+        title=args.title,
+        video_path=video_path,
+        frame_number=args.frame
     )
 
 

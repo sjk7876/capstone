@@ -141,7 +141,7 @@ def draw_court_corners(img, corners):
         raise ValueError(f"Expected 6 court corners, got {len(corners)}")
     
     pts = np.float32(corners)
-    names = ["farL", "farR", "closeR", "closeL", "centerL", "centerR"]
+    names = ["far left", "far right", "close right", "close left", "center left", "center right"]
     
     # Draw all 6 points
     for i, ((x, y), name) in enumerate(zip(pts, names)):
@@ -217,8 +217,8 @@ def add_court_corners_to_image(player, session, serve, output_path=None, split="
         raise ValueError(f"Expected 6 court corners, got {len(corners)}")
     
     # Draw ball boxes with labels
-    if boxes:
-        draw_ball_boxes(img, boxes)
+    # if boxes:
+    #     draw_ball_boxes(img, boxes)
     
     # Draw all 6 court corners
     draw_court_corners(img, corners)
