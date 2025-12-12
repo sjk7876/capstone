@@ -14,9 +14,6 @@ import re
 from scipy.signal import savgol_filter, find_peaks
 from common_args import add_player_session_serve_args, build_trajectory_paths, format_serve_number
 
-import numpy as np
-from scipy.signal import savgol_filter, find_peaks
-
 # Hit estimation constants
 MIN_HIT_FRAME = 20  # Hit frame will not be in the first N frames
 MIN_TRACK_LENGTH_FALLBACK = 5  # Minimum track length for fallback logic
@@ -36,6 +33,7 @@ FALLBACK_LANDING_OFFSET = 1  # Frames to add to hit frame if no landing found
 Y_PEAK_PROMINENCE = 5.0  # tweak per your scale
 Y_PEAK_MIN_DISTANCE = 2  # min frames between y-peaks
 MAX_LANDING_WINDOW = 120  # don't search forever after hit
+MAX_LANDING_SIZE_RATIO = 0.5  # Maximum ball size (as fraction of max size) to consider for landing detection
 
 # Signal processing constants
 SAVGOL_WINDOW_LENGTH = 9  # Savitzky-Golay filter window length
@@ -127,6 +125,8 @@ def _estimate_hit_from_toss_and_size(frames: np.array, y_s: np.array, size_s: np
 
 def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
     n = len(frames)
+    max_size = float(np.max(size_s))
+    size_threshold = max_size * MAX_LANDING_SIZE_RATIO
 
     # 1) choose a search segment after hit
     start_frame = hit_frame + LANDING_SEARCH_OFFSET
@@ -135,14 +135,31 @@ def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
     search_mask = (frames >= start_frame) & (frames <= end_frame)
     idxs = np.where(search_mask)[0]
     if len(idxs) == 0:
-        # fallback: global min size after hit
+        # fallback: global min size after hit (with size constraint)
         after_hit = np.where(frames > hit_frame)[0]
         if len(after_hit):
-            return int(frames[after_hit[np.argmin(size_s[after_hit])]])
+            after_hit_sizes = size_s[after_hit]
+            after_hit_frames = frames[after_hit]
+            # Filter by size threshold
+            size_valid = after_hit_sizes <= size_threshold
+            if np.any(size_valid):
+                valid_idxs = after_hit[size_valid]
+                return int(frames[valid_idxs[np.argmin(size_s[valid_idxs])]])
+            else:
+                # If no valid size found, use minimum anyway
+                return int(frames[after_hit[np.argmin(after_hit_sizes)]])
         return hit_frame + FALLBACK_LANDING_OFFSET
 
     # 2) find first strong *maximum* in y (ball hits floor, y locally largest)
-    y_seg = y_s[idxs]
+    # Filter by size threshold first
+    size_valid_mask = size_s[idxs] <= size_threshold
+    valid_idxs = idxs[size_valid_mask]
+    
+    if len(valid_idxs) == 0:
+        # No valid candidates by size, fall through to rolling-size logic
+        valid_idxs = idxs
+    
+    y_seg = y_s[valid_idxs]
     peaks, props = find_peaks(
         y_seg,
         prominence=Y_PEAK_PROMINENCE,
@@ -154,7 +171,8 @@ def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
         # pick earliest peak that actually looks like a bounce:
         # y before increasing, y after not strictly increasing
         for p in peaks:
-            g_idx = idxs[p]
+            # p is an index into y_seg, which corresponds to valid_idxs
+            g_idx = valid_idxs[p]
             if g_idx == 0 or g_idx >= n - 1:
                 continue
             # require "coming down" before
@@ -163,8 +181,10 @@ def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
             # and "not still screaming down" after
             if y_s[g_idx+1] >= y_s[g_idx]:
                 continue
-            landing_idx = g_idx
-            break
+            # also check size threshold (should already be valid, but double-check)
+            if size_s[g_idx] <= size_threshold:
+                landing_idx = g_idx
+                break
 
     # 3) if y-peak failed, fall back to old rolling-size logic (but only as backup)
     if landing_idx is None:
@@ -176,15 +196,31 @@ def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
 
         mask2 = roll_frames > hit_frame + LANDING_SEARCH_OFFSET
         if np.any(mask2):
-            landing_idx_local = np.argmin(rolling[mask2])
-            coarse = int(roll_frames[mask2][landing_idx_local])
+            # Filter rolling average by size threshold
+            roll_sizes = rolling[mask2]
+            roll_frames_masked = roll_frames[mask2]
+            size_valid_roll = roll_sizes <= size_threshold
+            
+            if np.any(size_valid_roll):
+                landing_idx_local = np.argmin(roll_sizes[size_valid_roll])
+                coarse = int(roll_frames_masked[size_valid_roll][landing_idx_local])
+            else:
+                # If no valid size found, use minimum anyway
+                landing_idx_local = np.argmin(roll_sizes)
+                coarse = int(roll_frames_masked[landing_idx_local])
 
             # refine on *y* and *size* in a tiny window around coarse
             cand = np.where((frames >= coarse - 2) & (frames <= coarse + 2))[0]
             if len(cand):
-                # prefer largest y (closest to floor); if tie, smallest size
-                best = max(cand, key=lambda i: (y_s[i], -size_s[i]))
-                landing_idx = best
+                # Filter candidates by size threshold, then prefer largest y (closest to floor); if tie, smallest size
+                cand_valid = [i for i in cand if size_s[i] <= size_threshold]
+                if len(cand_valid):
+                    best = max(cand_valid, key=lambda i: (y_s[i], -size_s[i]))
+                    landing_idx = best
+                else:
+                    # If no valid candidates, use best from all candidates
+                    best = max(cand, key=lambda i: (y_s[i], -size_s[i]))
+                    landing_idx = best
             else:
                 landing_idx = np.argmin(size_s)  # absolute fallback
         else:
@@ -196,7 +232,14 @@ def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
     if landing_frame <= hit_frame:
         after_hit = np.where(frames > hit_frame)[0]
         if len(after_hit):
-            landing_frame = int(frames[after_hit[np.argmin(size_s[after_hit])]])
+            # Filter by size threshold
+            after_hit_sizes = size_s[after_hit]
+            size_valid = after_hit_sizes <= size_threshold
+            if np.any(size_valid):
+                valid_idxs = after_hit[size_valid]
+                landing_frame = int(frames[valid_idxs[np.argmin(size_s[valid_idxs])]])
+            else:
+                landing_frame = int(frames[after_hit[np.argmin(after_hit_sizes)]])
         else:
             landing_frame = hit_frame + FALLBACK_LANDING_OFFSET
 
@@ -204,6 +247,15 @@ def _estimate_landing_from_size_and_motion(frames, y_s, size_s, dy, hit_frame):
     
 
 def estimate_hit_and_landing(track):
+    """
+    Estimate hit and landing frames from ball trajectory.
+    
+    Args:
+        track: List of trajectory points, each with 'frame', 'center', and optionally 'size'
+    
+    Returns:
+        Tuple of (hit_frame, landing_frame) or (None, None) if insufficient data
+    """
     if not track or len(track) < MIN_TRACK_LENGTH:
         return None, None
     
