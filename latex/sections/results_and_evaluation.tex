@@ -2,9 +2,9 @@
 The system was evaluated on a private dataset consisting of 113 annotated serves recorded across six players and five recording sessions. All videos were captured using a fixed baseline camera at 1920$\times$1080 resolution and 60 FPS. For model training and evaluation, the dataset was split into 80\% training and 20\% validation sets at the serve level. Evaluation focuses on the accuracy and stability of each stage of the pipeline, including ball detection performance, trajectory reconstruction quality, landing frame estimation accuracy, court calibration reliability, and serve-level consistency analysis. Because no public single-camera volleyball serve dataset with comparable annotations was found, results are reported relative to human-labeled ground truth and qualitative inspection rather than external benchmarks.
 
 \subsection{Ball Detection Performance}
-Ball detection performance was evaluated using standard object detection metrics on a held-out validation set. The fine-tuned YOLOv8 detector achieved a mAP50--95 of 0.911, with precision and recall of 99.45\% and 99.53\%, as seen in Table~\ref{tab:yolo-performance}, respectively. These results indicate that the detector reliably identifies the volleyball under challenging conditions.
+Ball detection performance was evaluated using standard object detection metrics on a held-out validation set. The fine-tuned YOLOv8 detector achieved a mAP50--95 of 0.911, with precision and recall of 0.9945 and 0.9953 on the validation set, as seen in Table~\ref{tab:yolo-performance}. These results indicate that the detector reliably identifies the volleyball under challenging conditions.
 
-\begin{table}[!h]
+\begin{table}[!t]
     \renewcommand{\arraystretch}{1.5}
     \caption{YOLOv8 Ball Detection Performance (Best Epoch @ 90)}
     \label{tab:yolo-performance}
@@ -16,8 +16,8 @@ Ball detection performance was evaluated using standard object detection metrics
     \hline
     Precision & 0.9452 \\
     Recall & 0.99527 \\
-    mAP@0.50 & 0.99495 \\
-    mAP@0.50:0.95 & 0.91115 \\
+    mAP50 & 0.99495 \\
+    mAP50--95 & 0.91115 \\
     \hline
     \end{tabular}
     \normalsize
