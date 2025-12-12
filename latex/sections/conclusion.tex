@@ -1,3 +1,15 @@
 \subsection{Conclusions}
+This project demonstrates that accurate volleyball serve analysis can be achieved using a single baseline camera and lightweight computer vision techniques. By combining a fine-tuned YOLOv8 detector, robust multi-object tracking with trajectory merging, and homography-based court calibration, the system reliably extracts serve-level metrics directly from standard practice footage.
+
+Across 113 annotated serves from six players and five recording sessions, the pipeline produces stable ball trajectories and estimates landing frames within approximately one frame of human-labeled ground truth. Court-projected landing locations enable quantitative analysis of serve accuracy, spatial consistency, and zone-based targeting, providing insights that are difficult to obtain through manual video review alone.
+
+Importantly, the system requires no specialized hardware, multi-camera setups, or external sensors. All processing operates on 1080p video recorded from a single fixed viewpoint, making the approach accessible to individual athletes, coaches, and smaller programs. These results demonstrate the feasibility of practical, single-camera volleyball analytics and establish a functional baseline for future extensions in sports performance analysis.
 
 \subsection{Future Work}
+Several directions exist to extend and improve the current system. First, manual serve splitting and court annotation remain the primary sources of user interaction. Fully automatic serve isolation using pose estimation or motion cues, as well as automatic court line detection, would further reduce setup time and improve usability.
+
+Second, while the current system estimates 2D trajectories and landing locations, the single-camera setup limits direct depth recovery. Future work could explore approximate 3D trajectory reconstruction by calibrating ball size across depth at the start of a session or by incorporating simple physical flight models to infer height and velocity.
+
+Robustness under challenging conditions also remains an open area. Extended occlusions, severe motion blur, net interactions, and abrupt trajectory changes can still degrade tracking quality. Integrating temporal learning-based trackers or physics-aware constraints may help address these failure cases.
+
+Finally, real-time or near–real-time feedback represents a promising application. With further optimization, the pipeline could provide immediate serve accuracy statistics and visualizations during practice, enabling athletes to adjust technique within a session rather than during later review.
