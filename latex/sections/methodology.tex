@@ -8,15 +8,15 @@ Training was conducted using the Ultralytics framework with a batch size of 4 an
 
 \begin{figure}[!t]
     \centering
-    \subfloat[Ball Detection on Serve]{%
+    \subfloat{%
       \includegraphics[width=0.8\columnwidth]{assets/sample_detections_serve.pdf}
     }
   
-    \subfloat[Ball Detection on Landing]{%
+    \subfloat{%
       \includegraphics[width=0.8\columnwidth]{assets/sample_detections_landing.pdf}
     }
 
-    \caption{Example YOLOv8 detections on 1080p frames. The ball is often small, blurred, or partially occluded.}
+    \caption{Example YOLOv8 detections on 1080p frames. The ball is often small, blurred, or partially occluded.~(a) Ball detection on serve, (b) Ball detection on landing}
     \label{fig:yolo-detect}
   \end{figure}
 
@@ -26,19 +26,19 @@ Figure~\ref{fig:yolo-detect} shows sample detections on frames with occlusions a
 
 \begin{figure}[!t]
     \centering
-    \subfloat[Raw SORT fragments]{%
+    \subfloat{%
       \includegraphics[width=0.9\columnwidth]{assets/sort_merge_before.pdf}
     }
   
-    \subfloat[Merged trajectories]{%
+    \subfloat{%
       \includegraphics[width=0.9\columnwidth]{assets/sort_merge_after.pdf}
     }
   
-    \subfloat[Selected serve trajectory]{%
+    \subfloat{%
       \includegraphics[width=0.9\columnwidth]{assets/sort_merge_final.pdf}
     }
   
-    \caption{Trajectory reconstruction stages from detection to final serve path.}
+    \caption{Trajectory reconstruction stages from detection to final serve path.\\ (a) Raw SORT fragments, (b) Merged trajectories, (c) Selected serve trajectory}
     \label{fig:sort-merge}
   \end{figure}
 
@@ -96,19 +96,19 @@ If no valid vertical-position peak satisfies this size constraint, a fallback st
 
 \begin{figure}[!t]
     \centering
-    \subfloat[Ball's Vertical Position]{%
+    \subfloat{%
       \includegraphics[width=0.9\columnwidth]{assets/landing_analysis_y.pdf}
     }
   
-    \subfloat[Ball's Derivative]{%
+    \subfloat{%
       \includegraphics[width=0.9\columnwidth]{assets/landing_analysis_dy.pdf}
     }
   
-    \subfloat[Ball's Apparent Size]{%
+    \subfloat{%
       \includegraphics[width=0.9\columnwidth]{assets/landing_analysis_size.pdf}
     }
   
-    \caption{Smoothed vertical position, derivative, and apparent size signals used to detect hit and landing events.}
+    \caption{Smoothed vertical position, derivative, and apparent size signals used to detect hit and landing events.~(a) Vertical position, (b) Derivative, (c) Apparent size}
     \label{fig:landing_analysis}
   \end{figure}
 

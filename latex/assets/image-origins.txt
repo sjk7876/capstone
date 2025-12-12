@@ -12,3 +12,12 @@ landing_analysis:
 
 sort_merge:
 	-p spencer -s 3 -e 10
+
+many_trajectories:
+	11-24-25-1-spencer.mp4
+
+landing_heatmap:
+	10-15-25-spencer.mp4
+
+zone_analysis:
+	10-15-25-spencer.mp4

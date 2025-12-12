@@ -1,16 +1,68 @@
-
-\subsection{Dataset Summary and Experimental Setup}
+\subsection{Dataset Summary and Evaluation Setup}
+The system was evaluated on a private dataset consisting of 113 annotated serves recorded across six players and five recording sessions. All videos were captured using a fixed baseline camera at 1920$\times$1080 resolution and 60 FPS. For model training and evaluation, the dataset was split into 80\% training and 20\% validation sets at the serve level. Evaluation focuses on the accuracy and stability of each stage of the pipeline, including ball detection performance, trajectory reconstruction quality, landing frame estimation accuracy, court calibration reliability, and serve-level consistency analysis. Because no public single-camera volleyball serve dataset with comparable annotations was found, results are reported relative to human-labeled ground truth and qualitative inspection rather than external benchmarks.
 
 \subsection{Ball Detection Performance}
+Ball detection performance was evaluated using standard object detection metrics on a held-out validation set. The fine-tuned YOLOv8 detector achieved a mAP50--95 of 0.911, with precision and recall of 99.45\% and 99.53\%, as seen in Table~\ref{tab:yolo-performance}, respectively. These results indicate that the detector reliably identifies the volleyball under challenging conditions.
+
+\begin{table}[!h]
+    \renewcommand{\arraystretch}{1.5}
+    \caption{YOLOv8 Ball Detection Performance (Best Epoch @ 90)}
+    \label{tab:yolo-performance}
+    \centering
+    \normalsize 
+    \begin{tabular}{l c}
+    \hline
+    \textbf{Metric} & \textbf{Value} \\
+    \hline
+    Precision & 0.9452 \\
+    Recall & 0.99527 \\
+    mAP@0.50 & 0.99495 \\
+    mAP@0.50:0.95 & 0.91115 \\
+    \hline
+    \end{tabular}
+    \normalsize
+    \end{table}
+
+Figure~\ref{fig:yolo-detect} illustrates representative detection results across several difficult frames. The examples highlight cases where the ball occupies fewer than ten pixels or overlaps with players. Despite these challenges, the detector consistently localizes the ball with high confidence, providing stable inputs for downstream tracking and trajectory analysis.
 
 \subsection{Tracking and Trajectory Quality}
+Temporal tracking is performed using SORT, which associates detections across frames using motion prediction and spatial overlap. In practice, SORT frequently produces fragmented tracks when detections are briefly lost due to occlusion, motion blur, or rapid changes in ball velocity following contact events. To address this, a custom fragment-merging strategy is applied that reconnects track segments based on temporal proximity, spatial continuity, and consistency in motion.
 
-\subsection{Landing and Hit Estimation Accuracy}
+Figure~\ref{fig:sort-merge} visualizes this process in three stages: the raw SORT track fragments, the merged trajectories after post-processing, and the final selected serve trajectory. After merging, the system reliably recovers a single continuous trajectory corresponding to the served ball. A speed-weighted and length-aware selection criterion is then applied to isolate the serve trajectory from remaining spurious tracks, such as those caused by stray balls or brief false detections.
+
+\subsection{Hit and Landing Estimation Accuracy}
+Landing frames were manually annotated for all serves and used as ground truth for evaluation. Hit frames were estimated automatically and were not included in the manual annotation process. Landing estimation accuracy is measured as the absolute frame difference between the predicted landing frame and the annotated ground truth.
+
+Figure~\ref{fig:landing_analysis} shows representative signal plots of vertical position, vertical velocity, and apparent ball size over time for a single serve. The predicted hit and landing events are overlaid on these signals, illustrating how motion-based cues and size constraints jointly contribute to robust landing detection. Across the dataset, predicted landing frames fall within approximately one frame of the annotated ground truth on average, with the majority of serves falling within a two-frame error window.
 
 \subsection{Court Calibration Accuracy}
+Court calibration is performed once per recording session using manually annotated court corners and center-line points. The resulting homography maps image coordinates to real-world court coordinates measured in meters. Calibration accuracy is assessed qualitatively by projecting trajectories and landing points onto a rendered court and verifying alignment with visible court lines.
 
 \subsection{Serve Accuracy and Consistency Analysis}
+Using calibrated landing coordinates, the system generates serve-level accuracy and consistency visualizations for each player and session. Figure~\ref{fig:many_trajectories} shows an example frame with all serve trajectories from a single session overlaid, with estimated hit and landing points marked for each serve. This visualization provides an intuitive overview of serve repeatability, directional bias, and variation across attempts.
 
-\subsection{Qualitative Results and Visualizations}
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=0.8\columnwidth]{assets/many_trajectories.pdf}
+    \caption{Example overlay of projected trajectories and landing points. Each trajectory is color-coded by serve ID.}
+    \label{fig:many_trajectories}
+\end{figure}
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=0.7\columnwidth]{assets/landing_heatmap.pdf}
+    \caption{Court-projected landing heatmap for a single session, with color intensity indicating spatial density.}
+    \label{fig:landing_heatmap}
+\end{figure}
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=0.7\columnwidth]{assets/zone_analysis.pdf}
+    \caption{Zone-based landing analysis for a single session.}
+    \label{fig:zone_analysis}
+\end{figure}
+
+In addition, landing distributions are summarized using court-projected heatmaps. Figure~\ref{fig:landing_heatmap} highlights spatial clustering patterns on the far side of the court, revealing both targeting tendencies and serve consistency across a session. To further contextualize these distributions, Figure~\ref{fig:zone_analysis} visualizes the same projected landing locations separated by predefined court zones. Serves landing in a user-specified target zone are highlighted in green, while all other serves are shown in red. This representation directly supports quantitative zone-based analysis, enabling summaries such as target-zone percentage and per-serve landing coordinates to be computed automatically. Together, these visualizations demonstrate that meaningful serve-level insights, including accuracy, consistency, and targeting behavior, can be extracted using only a single baseline camera and lightweight computer vision techniques.
 
 \subsection{Failure Cases and Limitations}
+Failure cases primarily occur when the ball is fully occluded for extended periods, when detection confidence drops for several consecutive frames, or when the ball contacts the net and sharply alters its trajectory. In these cases, tracking fragmentation or ambiguous landing signals can lead to missed or inaccurate estimates. Despite these limitations, the system remains robust across the majority of serves recorded under realistic practice conditions.
