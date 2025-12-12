@@ -345,6 +345,10 @@
 \usepackage{fancyhdr}
 \usepackage[caption=false,font=footnotesize]{subfig}
 
+% *** HYPERREF FOR PDF COMPATIBILITY ***
+% Improves compatibility with macOS Preview and other PDF viewers
+\usepackage[pdftex,unicode=true,colorlinks=false,pdfborder={0 0 0},pdfversion=1.4]{hyperref}
+
 \renewcommand{\thispagestyle}[2]{} 
 
 \fancypagestyle{plain}{
@@ -471,7 +475,7 @@ Computer vision; Volleyball analysis; Ball tracking; Sports analytics; Machine l
 \input{sections/dataset_design.tex}
 
 \section{Methodology}
-\input{sections/model_architecture.tex}
+\input{sections/methodology.tex}
 
 \section{Evaluation}
 \input{sections/evaluation.tex}

@@ -1,0 +1,14 @@
+sample detections:
+	-p spencer -s 3 -e 1 --frame 70 & 147
+
+court corners:
+	-p spencer -s 1 -e 10 --frame 150
+
+trajectory: 
+	-p spencer -s 3 -e 10 --frame 72
+
+landing_analysis:
+	-p spencer -s 3 -e 13
+
+sort_merge:
+	-p spencer -s 3 -e 10
